@@ -1,20 +1,10 @@
-#include <iostream>
-#include <sstream>
-#include <istream>
-#include <fstream>
-#include <iomanip>
 #include <string>
 #include <cmath>
 #include <functional>
 #include <vector>
 #include <cassert>
 #include "Math/SpecFuncMathMore.h"
-#include "TFile.h"
-#include "TBranch.h"
-#include "TH1D.h"
-#include "TH2F.h"
 #include "TMath.h"
-#include "TVector3.h"
 #include "TVectorD.h"
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
@@ -30,6 +20,7 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/PatCandidates/interface/Particle.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/JetReco/interface/JetCollection.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
@@ -64,6 +55,7 @@ TTbarFlatTreeProducer::TTbarFlatTreeProducer(edm::ParameterSet const& cfg)
   srcGenParticles_    = cfg.getUntrackedParameter<edm::InputTag>             ("genparticles",edm::InputTag("")); 
   triggerNames_       = cfg.getParameter<std::vector<std::string> >          ("triggerNames");
   triggerResults_     = cfg.getParameter<edm::InputTag>                      ("triggerResults");
+  triggerPrescales_   = cfg.getParameter<edm::InputTag>                      ("triggerPrescales");
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void TTbarFlatTreeProducer::beginJob() 
@@ -169,10 +161,12 @@ void TTbarFlatTreeProducer::beginJob()
   outTree_->Branch("lepIso"               ,"vector<float>"     ,&lIso_);
   //------------------------------------------------------------------
   triggerBit_ = new std::vector<bool>;
-  outTree_->Branch("triggerBit","vector<bool>",&triggerBit_);
+  triggerPre_ = new std::vector<int>;
+  outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
+  outTree_->Branch("triggerPre"           ,"vector<int>"       ,&triggerPre_);
   //------------------- MC ---------------------------------
-  outTree_->Branch("decay"         ,&decay_        ,"decay_/I");
-  outTree_->Branch("npu"           ,&npu_          ,"npu_/I");
+  outTree_->Branch("decay"                ,&decay_             ,"decay_/I");
+  outTree_->Branch("npu"                  ,&npu_               ,"npu_/I");
   cout<<"Begin job finished"<<endl;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -194,6 +188,7 @@ void TTbarFlatTreeProducer::endJob()
   delete elf_;
   delete puMva_;
   delete triggerBit_;
+  delete triggerPre_;
   delete lId_;
   delete lIso_;
   delete lPt_;
@@ -204,7 +199,7 @@ void TTbarFlatTreeProducer::endJob()
 //////////////////////////////////////////////////////////////////////////////////////////
 bool TTbarFlatTreeProducer::isGoodJet(const pat::Jet &jet)
 {
-  bool res = true; // by default is good, unless fails a cut bellow
+  bool res  = true; // by default is good, unless fails a cut bellow
   float chf = jet.chargedHadronEnergyFraction();
   float nhf = jet.neutralHadronEnergyFraction();
   float phf = jet.photonEnergyFraction();
@@ -214,7 +209,7 @@ bool TTbarFlatTreeProducer::isGoodJet(const pat::Jet &jet)
   int npr   = jet.neutralMultiplicity()+jet.chargedMultiplicity();
   float eta = fabs(jet.eta());
   float pt  = jet.pt();
-  bool idL = (npr>1 && phf<0.99 && nhf<0.99);
+  bool idL  = (npr>1 && phf<0.99 && nhf<0.99);
   //bool idM = (idL && ((eta<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && muf<0.99 && chf>0 && chm>0) || eta>2.4));
   bool idT = (idL && ((eta<=2.4 && nhf<0.9 && phf<0.9 && elf<0.9 && muf<0.9 && chf>0 && chm>0) || eta>2.4));
   if (!idT) res = false;
@@ -450,23 +445,31 @@ void TTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup co
   }
   //-------------- Trigger Info -----------------------------------
   triggerPassHisto_->Fill("totalEvents",1);
+
   edm::Handle<edm::TriggerResults> triggerResults;
   iEvent.getByLabel(triggerResults_,triggerResults);  
+
+  edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
+  iEvent.getByLabel(triggerPrescales_,triggerPrescales); 
+
   const edm::TriggerNames &names = iEvent.triggerNames(*triggerResults);  
   for(unsigned int k=0;k<triggerNames_.size();k++) {
     bool bit(false);
+    int pre(1);
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
       trigger_name.pop_back();
       if (trigger_name == triggerNames_[k]) {
-        bit = triggerResults->accept(itrig);
+        bit = triggerResults->accept(itrig); 
+        pre = triggerPrescales->getPrescaleForIndex(itrig);
         if (bit) {
           triggerPassHisto_->Fill(triggerNames_[k].c_str(),1);
         } 
       }
     }
-    triggerBit_->push_back(bit);   
+    triggerBit_->push_back(bit); 
+    triggerPre_->push_back(pre);   
   }   
   vector<const reco::Candidate *> myLeptons;
   //----- at least one good vertex -----------
@@ -702,6 +705,7 @@ void TTbarFlatTreeProducer::initialize()
   puMva_          ->clear();
   isBtag_         ->clear();
   triggerBit_     ->clear();
+  triggerPre_     ->clear();
   lId_            ->clear();
   lIso_           ->clear();
   lPt_            ->clear();

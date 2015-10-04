@@ -15,7 +15,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "TTree.h"
-#include "TH1.h"
+#include "TH1F.h"
 #include "TLorentzVector.h"
 
 class TTbarFlatTreeProducer : public edm::EDAnalyzer 
@@ -39,7 +39,7 @@ class TTbarFlatTreeProducer : public edm::EDAnalyzer
     void computeEventShapes(std::vector<const reco::Candidate *> myObj);
     int  findMatch(LorentzVector p4,std::vector<TLorentzVector> vP4);
     //---- configurable parameters --------   
-    edm::InputTag srcJets_,srcMET_,srcMuons_,srcElectrons_,srcGenParticles_,srcRho_,srcVtx_,srcQGL_,triggerResults_;
+    edm::InputTag srcJets_,srcMET_,srcMuons_,srcElectrons_,srcGenParticles_,srcRho_,srcVtx_,srcQGL_,triggerResults_,triggerPrescales_;
     std::string srcBtag_,srcPU_,kinfit_;
     int    nJetsMin_;
     int    nBJetsMin_;
@@ -58,6 +58,7 @@ class TTbarFlatTreeProducer : public edm::EDAnalyzer
     int   run_,evt_,nVtx_,lumi_,nJets_,nBJets_,nLeptons_,status_;
     float rho_,met_,metSig_,ht_,htBtag_,prob_,chi2_,qglAve_,qglMin_,qglMedian_;
     std::vector<bool> *triggerBit_;
+    std::vector<int>  *triggerPre_;
     //---- event-shape variables ------
     float sphericity_,aplanarity_,foxWolfram_[4];
     //---- top variables --------------

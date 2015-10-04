@@ -38,8 +38,8 @@ class TTHFlatTreeProducer : public edm::EDAnalyzer
     void initialize();
     void computeEventShapes(std::vector<const reco::Candidate *> myObj);
     //---- configurable parameters --------   
-    edm::InputTag srcJets_,srcMET_,srcMuons_,srcElectrons_,srcGenParticles_,srcRho_,srcVtx_,srcQGL_,triggerResults_;
-    std::string srcBtag_,srcPU_,kinfit_;
+    edm::InputTag srcJets_,srcMET_,srcMuons_,srcElectrons_,srcGenParticles_,srcRho_,srcVtx_,srcQGL_,triggerResults_,triggerPrescales_;
+    std::string srcBtag_,srcPU_,kinfit_,xmlFile_;
     int    nJetsMin_;
     int    nBJetsMin_;
     double ptMin_;
@@ -58,14 +58,11 @@ class TTHFlatTreeProducer : public edm::EDAnalyzer
     float rho_,met_,metPhi_,metSig_,ht_,htBtag_,prob_,chi2_,mva_,qglAve_,qglMin_,qglMedian_;
     float mbbAve_,mbbMin_,dRbbAve_,dRbbMin_,btagAve_,btagMax_,btagMin_;
     std::vector<bool> *triggerBit_;
+    std::vector<int>  *triggerPre_;
     //---- event-shape variables ------
     float sphericity_,aplanarity_,foxWolfram_[4];
     //---- top variables --------------
-    int   bTopIdx_[2];
     float mTop_[2],mW_[2],ptTop_[2],yTop_[2],dRbbTop_,mTTbar_,yTTbar_,ptTTbar_;
-    //---- higgs variables ------------
-    int   bHIdx_[2];
-    float mH_,dRbbH_,ptH_,yH_;
     //---- jet variables --------------
     std::vector<bool>  *isBtag_;
     std::vector<int>   *flavor_;

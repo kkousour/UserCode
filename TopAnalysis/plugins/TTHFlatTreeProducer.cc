@@ -31,6 +31,7 @@
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/PatCandidates/interface/Particle.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/JetReco/interface/JetCollection.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
@@ -54,6 +55,7 @@ TTHFlatTreeProducer::TTHFlatTreeProducer(edm::ParameterSet const& cfg)
   srcQGL_             = cfg.getParameter<edm::InputTag>                      ("qgtagger"); 
   srcBtag_            = cfg.getParameter<std::string>                        ("btagger");
   kinfit_             = cfg.getParameter<std::string>                        ("kinfit");
+  xmlFile_            = cfg.getParameter<std::string>                        ("xmlFile");
   nJetsMin_           = cfg.getParameter<int>                                ("nJetsMin");
   nBJetsMin_          = cfg.getParameter<int>                                ("nBJetsMin");
   etaMax_             = cfg.getParameter<double>                             ("etaMax");
@@ -65,6 +67,7 @@ TTHFlatTreeProducer::TTHFlatTreeProducer(edm::ParameterSet const& cfg)
   srcGenParticles_    = cfg.getUntrackedParameter<edm::InputTag>             ("genparticles",edm::InputTag("")); 
   triggerNames_       = cfg.getParameter<std::vector<std::string> >          ("triggerNames");
   triggerResults_     = cfg.getParameter<edm::InputTag>                      ("triggerResults");
+  triggerPrescales_   = cfg.getParameter<edm::InputTag>                      ("triggerPrescales");
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void TTHFlatTreeProducer::beginJob() 
@@ -117,12 +120,6 @@ void TTHFlatTreeProducer::beginJob()
   outTree_->Branch("qglMin"               ,&qglMin_            ,"qglMin_/F");
   outTree_->Branch("qglMedian"            ,&qglMedian_         ,"qglMedian_/F");
 
-  outTree_->Branch("mH"                   ,&mH_                ,"mH_/F");
-  outTree_->Branch("ptH"                  ,&ptH_               ,"ptH_/F");
-  outTree_->Branch("yH"                   ,&yH_                ,"yH_/F");
-  outTree_->Branch("dRbbH"                ,&dRbbH_             ,"dRbbH_/F");
-  outTree_->Branch("bHIdx"                ,&bHIdx_             ,"bHIdx_[2]/I");
-  outTree_->Branch("bTopIdx"              ,&bTopIdx_           ,"bTopIdx_[2]/I");
   outTree_->Branch("mW"                   ,&mW_                ,"mW_[2]/F");
   outTree_->Branch("mTop"                 ,&mTop_              ,"mTop_[2]/F");
   outTree_->Branch("ptTop"                ,&ptTop_             ,"ptTop_[2]/F");
@@ -175,9 +172,11 @@ void TTHFlatTreeProducer::beginJob()
   outTree_->Branch("lepEnergy"            ,"vector<float>"     ,&lE_);
   outTree_->Branch("lepIso"               ,"vector<float>"     ,&lIso_);
   //------------------------------------------------------------------
-  discr_ = new DiscriminatorMVA("KKousour/TopAnalysis/data/factory_mva_QCD__BDT_GRAD.weights.xml");
+  discr_ = new DiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFile_);
   triggerBit_ = new std::vector<bool>;
-  outTree_->Branch("triggerBit","vector<bool>",&triggerBit_);
+  triggerPre_ = new std::vector<int>;
+  outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
+  outTree_->Branch("triggerPre"           ,"vector<int>"       ,&triggerPre_);
   //------------------- MC ---------------------------------
   outTree_->Branch("decay"         ,&decay_        ,"decay_/I");
   outTree_->Branch("HToBB"         ,&HToBB_        ,"HToBB_/O");
@@ -204,6 +203,7 @@ void TTHFlatTreeProducer::endJob()
   delete puMva_;
   delete discr_;
   delete triggerBit_;
+  delete triggerPre_;
   delete lId_;
   delete lIso_;
   delete lPt_;
@@ -454,23 +454,31 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
   }
   //-------------- Trigger Info -----------------------------------
   triggerPassHisto_->Fill("totalEvents",1);
+
   edm::Handle<edm::TriggerResults> triggerResults;
   iEvent.getByLabel(triggerResults_,triggerResults);  
+
+  edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
+  iEvent.getByLabel(triggerPrescales_,triggerPrescales);
+
   const edm::TriggerNames &names = iEvent.triggerNames(*triggerResults);  
   for(unsigned int k=0;k<triggerNames_.size();k++) {
     bool bit(false);
+    int pre(1);
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
       trigger_name.pop_back();
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig);
+        pre = triggerPrescales->getPrescaleForIndex(itrig);
         if (bit) {
           triggerPassHisto_->Fill(triggerNames_[k].c_str(),1);
         } 
       }
     }
     triggerBit_->push_back(bit);   
+    triggerPre_->push_back(pre);
   }   
   vector<const reco::Candidate *> myLeptons;
   //----- at least one good vertex -----------
@@ -504,7 +512,6 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
   vector<float> vqgl;
   vector<int> vBIdx; 
   vector<TLorentzVector> vBP4,vBP4noTop;
- 
   for(pat::JetCollection::const_iterator ijet =jets->begin();ijet != jets->end(); ++ijet) {  
     if (isGoodJet(*ijet)) {
       float btag= ijet->bDiscriminator(srcBtag_.c_str());
@@ -599,7 +606,6 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
   run_    = iEvent.id().run();
   evt_    = iEvent.id().event();
   lumi_   = iEvent.id().luminosityBlock();
-
   if (kinfit_ != "") {
     edm::Handle<std::vector<double> > vchi2;
     iEvent.getByLabel(edm::InputTag(kinfit_,"Chi2"),vchi2);
@@ -628,41 +634,6 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
     edm::Handle<std::vector<pat::Particle> > partonsPbar;
     iEvent.getByLabel(edm::InputTag(kinfit_,"PartonsLightPBar"),partonsPbar); 
       
-    //---- find the bjets that don't match the kinfit -----
-    if (status_ > -1) {
-      unsigned int kB(0),kBbar(0);
-      for(unsigned int k=0;k<vBP4.size();k++) {
-        float dRB    = deltaR((*partonsB)[0].eta(),(*partonsB)[0].phi(),vBP4[k].Eta(),vBP4[k].Phi());
-        float dRBbar = deltaR((*partonsBbar)[0].eta(),(*partonsBbar)[0].phi(),vBP4[k].Eta(),vBP4[k].Phi());
-        if (dRB < 0.1) {
-          kB = k; 
-        }
-        if (dRBbar < 0.1) {
-          kBbar = k;
-        } 
-      }
-      bTopIdx_[0] = vBIdx[kB];
-      bTopIdx_[1] = vBIdx[kBbar];
-        
-      if (vBP4.size() > 3) { 
-        int counter(0);
-        for(unsigned int k=0;k<vBP4.size();k++) {
-          if (k != kB && k != kBbar) {
-            vBP4noTop.push_back(vBP4[k]);
-            if (counter < 2) {
-              bHIdx_[counter] = vBIdx[k];
-            }
-            counter++;
-          }
-        }
-      }
-      if (vBP4noTop.size() > 1) {
-        mH_       = (vBP4noTop[0]+vBP4noTop[1]).M();
-        ptH_      = (vBP4noTop[0]+vBP4noTop[1]).Pt();
-        yH_       = (vBP4noTop[0]+vBP4noTop[1]).Rapidity();
-        dRbbH_    = deltaR(vBP4noTop[0].Eta(),vBP4noTop[0].Phi(),vBP4noTop[1].Eta(),vBP4noTop[1].Phi());
-      }
-    }
     //---- KinFit information -----------------------------
     status_   = (*vstatus)[0];
     chi2_     = (*vchi2)[0];
@@ -682,8 +653,7 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
     yTTbar_     = p4TTbar.Rapidity();
     ptTTbar_    = p4TTbar.pt();
   }// if kinfit
-  mva_ = discr_->eval(nJets_,ht_,htBtag_,(*pt_)[0],(*pt_)[1],(*pt_)[2],(*pt_)[3],(*pt_)[4],(*pt_)[5],mbbMin_,dRbbMin_,
-qglAve_,qglMin_,qglMedian_,sphericity_,aplanarity_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3]);
+  
   cutFlowHisto_->Fill("All",1);
   if (nJets_ >= nJetsMin_) {
     cutFlowHisto_->Fill("nJets",1);
@@ -691,6 +661,9 @@ qglAve_,qglMin_,qglMedian_,sphericity_,aplanarity_,foxWolfram_[0],foxWolfram_[1]
       cutFlowHisto_->Fill("nBJets",1);
       if (ht_ > htMin_) {
         cutFlowHisto_->Fill("ht",1);
+        if (nJets_ > 5 && nBJets_ > 1) {
+          mva_ = discr_->eval(status_,nBJets_,nJets_,ht_,(*pt_)[0],(*pt_)[1],(*pt_)[2],(*pt_)[3],(*pt_)[4],(*pt_)[5],mbbMin_,dRbbMin_,sphericity_,aplanarity_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
+        }
         outTree_->Fill();     
       }
     }  
@@ -713,17 +686,9 @@ void TTHFlatTreeProducer::initialize()
   prob_           = -999;
   chi2_           = -999;
   mva_            = -999;
-  mH_             = -999;
-  ptH_            = -999;
-  yH_             = -999;
-  dRbbH_          = -999;
   dRbbTop_        = -999;
   mW_[0]          = -999;
   mW_[1]          = -999;
-  bTopIdx_[0]     = -1;
-  bTopIdx_[1]     = -1;
-  bHIdx_[0]       = -1;
-  bHIdx_[1]       = -1;
   mTop_[0]        = -999;
   mTop_[1]        = -999;
   ptTop_[0]       = -999;
@@ -767,6 +732,7 @@ void TTHFlatTreeProducer::initialize()
   puMva_          ->clear();
   isBtag_         ->clear();
   triggerBit_     ->clear();
+  triggerPre_     ->clear();
   lId_            ->clear();
   lIso_           ->clear();
   lPt_            ->clear();
