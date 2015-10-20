@@ -21,7 +21,7 @@ XSEC = [ttH_xsec*Hbb_BR, ttbar_xsec, QCD_HT200to300_xsec, QCD_HT300to500_xsec, Q
 
 print FileName, XSEC
 
-LUMI = 1		
+LUMI = 10000		
 NCAT = 2		
 inf  = []		
 tr   = []	
@@ -140,4 +140,3 @@ for k in xrange(NCAT):
 
 datacard.write("\n")
 datacard.close()
-
