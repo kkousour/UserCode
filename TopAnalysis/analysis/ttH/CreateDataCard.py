@@ -1,3 +1,4 @@
+#!usr/bin/python
 import ROOT
 from ROOT import TH1F, TCanvas, TFile, gROOT, TTree, TCut, TMath
 
@@ -139,3 +140,4 @@ for k in xrange(NCAT):
 
 datacard.write("\n")
 datacard.close()
+
