@@ -1,5 +1,5 @@
 #!usr/bin/python
-import ROOT
+import ROOT, os
 from ROOT import TH1F, TCanvas, TFile, gROOT, TTree, TCut, TMath, RooRealVar, RooDataHist, RooArgList, RooArgSet, RooAddPdf, RooFit, RooGenericPdf, RooWorkspace, RooMsgService, RooHistPdf
 
 gROOT.ForceStyle()    
@@ -38,7 +38,7 @@ can.Divide(2,1)
 
 for i in xrange(len(FileName)):
   inf.append(TFile.Open("flatTree_" + FileName[i] + ".root"))
-  print "flatTree_" + FileName[i] + ".root"
+  print "flatTree_" + FileName[i] + ".root\t"
   tr.append(inf[-1].Get("hadtop/events"))
   hpu = inf[-1].Get("hadtop/pileup")
   
@@ -51,8 +51,8 @@ for i in xrange(len(FileName)):
     h[i][k].SetLineWidth(2)
     h[i][k].SetLineColor(COLOR[i])
     h[i][k].Scale(LUMI*XSEC[i]/hpu.GetEntries())    
+    print hpu.GetEntries()
 
-outf = TFile("ttH-shapes.root", "RECREATE")   
 hQCD = []
 
 for k in xrange(NCAT):
@@ -105,7 +105,7 @@ TTJ_Norm = []
 
 for k in xrange(NCAT):
   
-  MVA.append(RooRealVar("mva","mva", -1.0, 1.0))
+  MVA.append(RooRealVar("mva","mva", -1, 1))
   
   RooObsHist.append(RooDataHist("RooObsHist", "RooObsHist", RooArgList(MVA[-1]), hData[k]))
   RooSigHist.append(RooDataHist("RooSigHist", "RooSigHist", RooArgList(MVA[-1]), h[0][k]))
@@ -116,15 +116,15 @@ for k in xrange(NCAT):
   SignalPDF.append(RooHistPdf( "signalCAT"   + str(k), "signalCAT"   + str(k), RooArgSet(MVA[-1]), RooSigHist[-1]))
   QCDPDF.append(RooHistPdf(    "qcdCAT"      + str(k), "qcdCAT"      + str(k), RooArgSet(MVA[-1]), RooQCDHist[-1]))
   TTJPDF.append(RooHistPdf(    "ttjetsCAT"   + str(k), "ttjetsCAT"   + str(k), RooArgSet(MVA[-1]), RooTTJHist[-1]))
-  QCD_Norm.append(RooRealVar("QCD_Norm","QCD_Norm", 0, -1e+04, 1e+04))
-  TTJ_Norm.append(RooRealVar("TTJ_Norm","TTJ_Norm", 0, -1e+04, 1e+04))
+  QCD_Norm.append(RooRealVar(  "QCD_Norm"    + str(k),"QCD_Norm"     + str(k), 0, -1e+04, 1e+04))
+  TTJ_Norm.append(RooRealVar(  "TTJ_Norm"    + str(k),"TTJ_Norm"     + str(k), 0, -1e+04, 1e+04))
   
-  getattr(workspace,'import')(RooObsHist[-1], RooFit.Rename("data_obsCAT" + str(k)))
   getattr(workspace,'import')(SignalPDF[-1])
   getattr(workspace,'import')(QCDPDF[-1])
   getattr(workspace,'import')(TTJPDF[-1])
   getattr(workspace,'import')(QCD_Norm[-1])
   getattr(workspace,'import')(TTJ_Norm[-1])
+  getattr(workspace,'import')(RooObsHist[-1], RooFit.Rename("data_obsCAT" + str(k)))
   
 workspace.Print()
 workspace.writeToFile("ttH-shapes.root")
@@ -180,13 +180,18 @@ for k in xrange(NCAT):
 
   datacard.write("{:>12.3f} {:>12.3f} {:>12.3f}".format(rate1, rate2, rate3))
 
+datacard.write("\n")
+
 datacard.write(7*12*"-" + "\n")
+
 datacard.write("{:<8} {:<4}".format("QCD_Norm", "lnU"))
 for k in xrange(NCAT):
-  datacard.write("{:>12} {:>12} {:>12}".format("-", "-", "1.5\n"))
+  datacard.write("{:>12} {:>12} {:>12}".format("-", "-", "1.5"))
+
+datacard.write("\n")
 
 datacard.write("{:<8} {:<4}".format("TTJ_Norm", "lnU"))
 for k in xrange(NCAT):
-  datacard.write("{:>12} {:>12} {:>12}".format("-", "1.5", "-\n"))
+  datacard.write("{:>12} {:>12} {:>12}".format("-", "1.5", "-"))
 
 datacard.close()
