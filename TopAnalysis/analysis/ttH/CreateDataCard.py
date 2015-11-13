@@ -7,6 +7,7 @@ parser = optparse.OptionParser()
 parser.add_option("--lumi",     action = "store", type = "float", dest = "LUMI",     default = 1000.)
 parser.add_option("--ncat",     action = "store", type = "string",   dest = "NCAT",     default = "0,1")
 parser.add_option("--template", action = "store", type = "str",   dest = "TEMPLATE", default = 'MC')
+# if TEMPLATE option is MC then QCD MC samples are used to extract QCD background shape on BDT variable, otherwise the data with loose b-tagging will be used.
 
 (options, args) = parser.parse_args()
 
@@ -42,7 +43,7 @@ tr    = []
 h     = [[] for x in range(len(FileName))]
 hData = []
 
-dataf = TFile.Open("flatTree_JetHT.root")  # data file
+dataf = TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_JetHT.root")  # data file
 
 COLOR = [ROOT.kRed, ROOT.kBlack, ROOT.kBlue, ROOT.kBlue-5, ROOT.kBlue-8, ROOT.kGreen, ROOT.kGreen-4, ROOT.kGray, ROOT.kRed+4]
 CUT   = [TCut("ht>500 && jetPt[5]>40 && nBJets==2"), TCut("ht>500 && jetPt[5]>40 && nBJets>2")]
@@ -51,26 +52,32 @@ can = TCanvas("Canvas0","Canvas0", 600, 600)
 can.Divide(2,1)
 
 for i in xrange(len(FileName)):
-  inf.append(TFile.Open("flatTree_" + FileName[i] + ".root"))
+  inf.append(TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_" + FileName[i] + ".root"))
   print "flatTree_" + FileName[i] + ".root\t"
   
   if TEMPLATE == "MC":
     tr.append(inf[-1].Get("hadtop/events"))
     hpu = inf[-1].Get("hadtop/pileup")
   else:
-    tr.append(inf[-1].Get("hadtopL/events"))
-    hpu = inf[-1].Get("hadtopL/pileup")
+    if i == 2: # gets the qcd shape from hadtopL directory
+      tr.append(inf[-1].Get("hadtopL/events"))
+      hpu = inf[-1].Get("hadtopL/pileup")
+    else: # gets the other shapes from hadtop directory again
+      tr.append(inf[-1].Get("hadtop/events"))
+      hpu = inf[-1].Get("hadtop/pileup")
 
   for k in NCAT:
     can.cd(k + 1)
     print i, k
     h[i].append(TH1F("h" + str(i) + str(k), "h" + str(i) + str(k), 25,-1,1))
     h[i][k].Sumw2()
+    print CUT[k], tr[i].GetName()
     tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT[k])
     h[i][k].SetLineWidth(2)
     h[i][k].SetLineColor(COLOR[i])
-    h[i][k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
-    print hpu.GetEntries()
+    if TEMPLATE == "MC":
+      h[i][k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
+      print hpu.GetEntries()
 
 hQCD = []
 
@@ -157,12 +164,12 @@ for k in NCAT:
 workspace.Print()
 workspace.writeToFile("ttH-shapes.root")
 
-datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT_" + NCAT + ".txt","w")
-datacard.write("imax "  + str(NCAT) + "\n")
+datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_") + ".txt","w")
+datacard.write("imax "  + str(len(NCAT)) + "\n")
 datacard.write("jmax *" + "\n")
 datacard.write("kmax *" + "\n")
 datacard.write(7*12*"-" + "\n")
-datacard.write("shapes *  * " + outf.GetName() + " w:$PROCESS$CHANNEL" + "\n")
+datacard.write("shapes *  * " + "ttH-shapes.root" + " w:$PROCESS$CHANNEL" + "\n")
 datacard.write(7*12*"-" + "\n")
 datacard.write("{:<12}".format("bin"))
 
