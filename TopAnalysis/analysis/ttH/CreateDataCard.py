@@ -75,7 +75,7 @@ for i in xrange(len(FileName)):
     tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT[k])
     h[i][k].SetLineWidth(2)
     h[i][k].SetLineColor(COLOR[i])
-    if TEMPLATE == "MC":
+    if not (TEMPLATE == "DATA" and i == 2):
       h[i][k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
       print hpu.GetEntries()
 
@@ -164,7 +164,7 @@ for k in NCAT:
 workspace.Print()
 workspace.writeToFile("ttH-shapes.root")
 
-datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_") + ".txt","w")
+datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_").replace(" ", "") + ".txt","w")
 datacard.write("imax "  + str(len(NCAT)) + "\n")
 datacard.write("jmax *" + "\n")
 datacard.write("kmax *" + "\n")
