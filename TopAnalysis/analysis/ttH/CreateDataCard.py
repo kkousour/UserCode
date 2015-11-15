@@ -86,13 +86,13 @@ for i in xrange(len(FileName)):
     can.cd(k + 1)
     print i, k
     h[i].append(TH1F("h" + str(i) + str(k), "h" + str(i) + str(k), 25,-1,1))
-    h[i][k].Sumw2()
+    h[i][-k].Sumw2()
     print CUT[k], tr[i].GetName()
     tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT[k])
-    h[i][k].SetLineWidth(2)
-    h[i][k].SetLineColor(i)
+    h[i][-k].SetLineWidth(2)
+    h[i][-k].SetLineColor(i)
     if not (TEMPLATE == "DATA" and i == 9):
-      h[i][k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
+      h[i][-k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
       print hpu.GetEntries()
 
 hQCD = []
@@ -100,94 +100,116 @@ hQCD = []
 for k in NCAT:
   can.cd(k + 1)
   if TEMPLATE == "MC":
-    hQCD.append(h[9][k].Clone("hQCD" + str(k)))
-    hQCD[k].Add(h[10][k])
-    hQCD[k].Add(h[11][k])
-    hQCD[k].Add(h[12][k])
-    hQCD[k].Add(h[13][k])
-    hQCD[k].Add(h[14][k])
-    hQCD[k].Add(h[15][k])
+    hQCD.append(h[9][-k].Clone("hQCD" + str(k)))
+    hQCDk.Add(h[10][-k])
+    hQCDk.Add(h[11][-k])
+    hQCDk.Add(h[12][-k])
+    hQCDk.Add(h[13][-k])
+    hQCDk.Add(h[14][-k])
+    hQCDk.Add(h[15][-k])
   else:
-    hQCD.append(h[9][k].Clone("hQCD" + str(k)))
+    hQCD.append(h[9][-k].Clone("hQCD" + str(k)))
 
-  h[0][k].SetFillColor(ROOT.kRed-10)
-  h[1][k].SetFillColor(ROOT.kGreen-10)
-  hQCD[k].SetFillColor(ROOT.kBlue-10)
-  h[0][k].SetFillStyle(3001)
-  h[1][k].SetFillStyle(3001)
+  h[0][-k].SetFillColor(ROOT.kRed-10)
+  h[1][-k].SetFillColor(ROOT.kGreen-10)
+  hQCD[-k].SetFillColor(ROOT.kBlue-10)
+  h[0][-k].SetFillStyle(3001)
+  h[1][-k].SetFillStyle(3001)
 
-  print "QCD events:        ", hQCD[k].Integral()
-  print "TTbar events:      ", h[1][k].Integral()
-  print "WWTo4Q events:     ", h[2][k].Integral()
-  print "ZZTo4Q events:     ", h[3][k].Integral()
-  print "WZ events:         ", h[4][k].Integral()
-  print "TTWJetsToQQ events:", h[5][k].Integral()
-  print "TTZToQQ events:    ", h[6][k].Integral()
-  print "ZJetsToQQ events:  ", h[7][k].Integral()
-  print "WJetsToQQ events:  ", h[8][k].Integral()
-  print "TTH events:        ", h[0][k].Integral()
+  print "QCD events:        ", hQCD[-k].Integral()
+  print "TTbar events:      ", h[1][-k].Integral()
+  print "WWTo4Q events:     ", h[2][-k].Integral()
+  print "ZZTo4Q events:     ", h[3][-k].Integral()
+  print "WZ events:         ", h[4][-k].Integral()
+  print "TTWJetsToQQ events:", h[5][-k].Integral()
+  print "TTZToQQ events:    ", h[6][-k].Integral()
+  print "ZJetsToQQ events:  ", h[7][-k].Integral()
+  print "WJetsToQQ events:  ", h[8][-k].Integral()
+  print "TTH events:        ", h[0][-k].Integral()
 
-  max1 = max(h[1][k].GetBinContent(h[1][k].GetMaximumBin()), hQCD[k].GetBinContent(hQCD[k].GetMaximumBin()))
-  max2 = max(h[0][k].GetBinContent(h[0][k].GetMaximumBin()), max1)
+  max1 = max(h[1][-k].GetBinContent(h[1][-k].GetMaximumBin()), hQCD[-k].GetBinContent(hQCD[-k].GetMaximumBin()))
+  max2 = max(h[0][-k].GetBinContent(h[0][-k].GetMaximumBin()), max1)
 
-  hQCD[k].SetMaximum(1.1*max2)
-  hQCD[k].Draw("hist")
-  h[0][k].Draw("same hist")
-  h[1][k].Draw("same hist")
+  hQCD[-k].SetMaximum(1.1*max2)
+  hQCD[-k].Draw("hist")
+  h[0][-k].Draw("same hist")
+  h[1][-k].Draw("same hist")
 
-  hQCD[k].SetName("qcdCAT"      + str(k))
+  hQCD[-k].SetName("qcdCAT"      + str(k))
 
-  h[0][k].SetName("signalCAT"   + str(k))
+  h[0][-k].SetName("signalCAT"   + str(k))
 
-  h[1][k].SetName("ttjetsCAT"   + str(k))
+  h[1][-k].SetName("ttjetsCAT"   + str(k))
 
   dataf.cd()
   hData.append(TH1F("data_obsCAT" + str(k), "data_obsCAT" + str(k), 25, -1, 1))
   datatree = dataf.Get("hadtop/events")
   hpu = dataf.Get("hadtop/pileup")
-  datatree.Draw("mva>>"  +  hData[k].GetName(), CUT[k])
+  datatree.Draw("mva>>"  +  hData[-k].GetName(), CUT[k])
 
 workspace   = RooWorkspace("w","workspace")
-RooSigHist  = []
-MVA         = []
-RooObsHist  = []
-RooSigHist  = []
-RooQCDHist  = []
-RooTTJHist  = []
+RooSigHist         = []
+MVA                = []
+RooObsHist         = []
+RooSigHist         = []
+RooQCDHist         = []
+RooTTJHist         = []
+RooWWTo4QHist      = []
+RooZZTo4QHist      = []
+RooWZHist          = []
+RooTTWJetsToQQHist = []
+RooTTZToQQHist     = []
+RooZJetsToQQHist  = []
+RooWJetsToQQHist   = []
+
 ObsPDF      = []
 SignalPDF   = []
 QCDPDF      = []
 TTJPDF      = []
-QCD_Norm = []
-TTJ_Norm = []
+WWTo4QPDF      = []
+ZZTo4QPDF      = []
+WZPDF          = []
+TTWJetsToQQPDF = []
+TTZToQQPDF     = []
+ZJetsToQQPDF  = []
+WJetsToQQPDF   = []
+
+QCD_Norm        = []
+TTJ_Norm        = []
+WWTo4Q_Norm     = []
+ZZTo4Q_Norm     = []
+WZ_Norm         = []
+TTZToQQ_Norm    = []
+ZJetsToQQ_Norm = []
+WJetsToQQ_Norm  = []
 
 for k in NCAT:
 
   MVA.append(RooRealVar("mva","mva", -1, 1))
 
-  RooObsHist.append(RooDataHist(        "RooObsHist",         "RooObsHist",         RooArgList(MVA[-1]), hData[k]))
-  RooSigHist.append(RooDataHist(        "RooSigHist",         "RooSigHist",         RooArgList(MVA[-1]), h[0][k]))
-  RooQCDHist.append(RooDataHist(        "RooQCDHist",         "RooQCDHist",         RooArgList(MVA[-1]), hQCD[k]))
-  RooTTJHist.append(RooDataHist(        "RooTTJHist",         "RooTTJHist",         RooArgList(MVA[-1]), h[1][k]))
-  RooWWTo4QHist.append(RooDataHist(     "RooWWTo4QHist",      "RooWWTo4QHist",      RooArgList(MVA[-1]), h[2][k]))
-  RooZZTo4QHist.append(RooDataHist(     "RooZZTo4QHist",      "RooZZTo4QHist",      RooArgList(MVA[-1]), h[3][k]))
-  RooWZHist.append(RooDataHist(         "RooWZHist",          "RooWZHist",          RooArgList(MVA[-1]), h[4][k]))
-  RooTTWJetsToQQHist.append(RooDataHist("RooTTWJetsToQQHist", "RooTTWJetsToQQHist", RooArgList(MVA[-1]), h[5][k]))
-  RooTTZToQQHist.append(RooDataHist(    "RooTTZToQQHist",     "RooTTZToQQHist",     RooArgList(MVA[-1]), h[6][k]))
-  RooZJetsToQQJHist.append(RooDataHist( "RooZJetsToQQJHist",  "RooZJetsToQQJHist",  RooArgList(MVA[-1]), h[7][k]))
-  RooWJetsToQQHist.append(RooDataHist(  "RooWJetsToQQHist",   "RooWJetsToQQHist",   RooArgList(MVA[-1]), h[8][k]))
+  RooObsHist.append(RooDataHist(        "RooObsHist",         "RooObsHist",         RooArgList(MVA[-1]), hData[-k]))
+  RooSigHist.append(RooDataHist(        "RooSigHist",         "RooSigHist",         RooArgList(MVA[-1]), h[0][-k]))
+  RooQCDHist.append(RooDataHist(        "RooQCDHist",         "RooQCDHist",         RooArgList(MVA[-1]), hQCD[-k]))
+  RooTTJHist.append(RooDataHist(        "RooTTJHist",         "RooTTJHist",         RooArgList(MVA[-1]), h[1][-k]))
+  RooWWTo4QHist.append(RooDataHist(     "RooWWTo4QHist",      "RooWWTo4QHist",      RooArgList(MVA[-1]), h[2][-k]))
+  RooZZTo4QHist.append(RooDataHist(     "RooZZTo4QHist",      "RooZZTo4QHist",      RooArgList(MVA[-1]), h[3][-k]))
+  RooWZHist.append(RooDataHist(         "RooWZHist",          "RooWZHist",          RooArgList(MVA[-1]), h[4][-k]))
+  RooTTWJetsToQQHist.append(RooDataHist("RooTTWJetsToQQHist", "RooTTWJetsToQQHist", RooArgList(MVA[-1]), h[5][-k]))
+  RooTTZToQQHist.append(RooDataHist(    "RooTTZToQQHist",     "RooTTZToQQHist",     RooArgList(MVA[-1]), h[6][-k]))
+  RooZJetsToQQHist.append(RooDataHist(  "RooZJetsToQQHist",   "RooZJetsToQQHist",   RooArgList(MVA[-1]), h[7][-k]))
+  RooWJetsToQQHist.append(RooDataHist(  "RooWJetsToQQHist",   "RooWJetsToQQHist",   RooArgList(MVA[-1]), h[8][-k]))
 
   RooObsHist[-1].Print()
 
   SignalPDF.append(RooHistPdf(     "signalCAT"      + str(k), "signalCAT"      + str(k), RooArgSet(MVA[-1]), RooSigHist[-1]))
-  QCDPDF.append(RooHistPdf(        "qcdCAT"         + str(k), "qcdCAT"         + str(k), RooArgSet(MVA[-1]), RooQCDHist[-1]))
+  QCDPDF.append(RooHistPdf(        "QCDCAT"         + str(k), "QCDCAT"         + str(k), RooArgSet(MVA[-1]), RooQCDHist[-1]))
   TTJPDF.append(RooHistPdf(        "ttjetsCAT"      + str(k), "ttjetsCAT"      + str(k), RooArgSet(MVA[-1]), RooTTJHist[-1]))
   WWTo4QPDF.append(RooHistPdf(     "WWTo4QCAT"      + str(k), "WWTo4QCAT"      + str(k), RooArgSet(MVA[-1]), RooWWTo4QHist[-1]))
   ZZTo4QPDF.append(RooHistPdf(     "ZZTo4QCAT"      + str(k), "ZZTo4QCAT"      + str(k), RooArgSet(MVA[-1]), RooZZTo4QHist[-1]))
   WZPDF.append(RooHistPdf(         "WZCAT"          + str(k), "WZCAT"          + str(k), RooArgSet(MVA[-1]), RooWZHist[-1]))
   TTWJetsToQQPDF.append(RooHistPdf("TTWJetsToQQCAT" + str(k), "TTWJetsToQQCAT" + str(k), RooArgSet(MVA[-1]), RooTTWJetsToQQHist[-1]))
   TTZToQQPDF.append(RooHistPdf(    "TTZToQQCAT"     + str(k), "TTZToQQCAT"     + str(k), RooArgSet(MVA[-1]), RooTTZToQQHist[-1]))
-  ZJetsToQQJPDF.append(RooHistPdf( "ZJetsToQQJCAT"  + str(k), "ZJetsToQQJCAT"  + str(k), RooArgSet(MVA[-1]), RooZJetsToQQJHist[-1]))
+  ZJetsToQQPDF.append(RooHistPdf(  "ZJetsToQQCAT"   + str(k), "ZJetsToQQCAT"   + str(k), RooArgSet(MVA[-1]), RooZJetsToQQHist[-1]))
   WJetsToQQPDF.append(RooHistPdf(  "WJetsToQQCAT"   + str(k), "WJetsToQQCAT"   + str(k), RooArgSet(MVA[-1]), RooWJetsToQQHist[-1]))
 
   QCD_Norm.append(RooRealVar(       "QCD_Norm"       + str(k), "QCD_Norm"        + str(k), 0, -1e+04, 1e+04))
@@ -196,7 +218,7 @@ for k in NCAT:
   ZZTo4Q_Norm.append(RooRealVar(    "ZZTo4Q_Norm"    + str(k), "ZZTo4Q_Norm"     + str(k), 0, -1e+04, 1e+04))
   WZ_Norm.append(RooRealVar(        "WZ_Norm"        + str(k), "WZ_Norm"         + str(k), 0, -1e+04, 1e+04))
   TTZToQQ_Norm.append(RooRealVar(   "TTZToQQ_Norm"   + str(k), "TTZToQQ_Norm"    + str(k), 0, -1e+04, 1e+04))
-  ZJetsToQQJ_Norm.append(RooRealVar("ZJetsToQQJ_Norm"+ str(k), "ZJetsToQQJ_Norm" + str(k), 0, -1e+04, 1e+04))
+  ZJetsToQQ_Norm.append(RooRealVar( "ZJetsToQQ_Norm" + str(k), "ZJetsToQQ_Norm"  + str(k), 0, -1e+04, 1e+04))
   WJetsToQQ_Norm.append(RooRealVar( "WJetsToQQ_Norm" + str(k), "WJetsToQQ_Norm"  + str(k), 0, -1e+04, 1e+04))
 
   getattr(workspace,'import')(SignalPDF[-1])
@@ -207,7 +229,7 @@ for k in NCAT:
   getattr(workspace,'import')(WZPDF[-1])
   getattr(workspace,'import')(TTWJetsToQQPDF[-1])
   getattr(workspace,'import')(TTZToQQPDF[-1])
-  getattr(workspace,'import')(ZJetsToQQJPDF[-1])
+  getattr(workspace,'import')(ZJetsToQQPDF[-1])
   getattr(workspace,'import')(WJetsToQQPDF[-1])  
 
   getattr(workspace,'import')(QCD_Norm[-1])
@@ -216,78 +238,78 @@ for k in NCAT:
   getattr(workspace,'import')(ZZTo4Q_Norm[-1])
   getattr(workspace,'import')(WZ_Norm[-1])
   getattr(workspace,'import')(TTZToQQ_Norm[-1])
-  getattr(workspace,'import')(ZJetsToQQJ_Norm[-1])
+  getattr(workspace,'import')(ZJetsToQQ_Norm[-1])
   getattr(workspace,'import')(WJetsToQQ_Norm[-1])
 
   getattr(workspace,'import')(RooObsHist[-1], RooFit.Rename("data_obsCAT" + str(k)))
 
 workspace.Print()
-workspace.writeToFile("ttH-shapes.root")
+workspace.writeToFile("ttH-shapes_" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_").replace(" ", "") + ".root")
 
 datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_").replace(" ", "") + ".txt","w")
 datacard.write("imax "  + str(len(NCAT)) + "\n")
 datacard.write("jmax *" + "\n")
 datacard.write("kmax *" + "\n")
-datacard.write(7*18*"-" + "\n")
-datacard.write("shapes *  * " + "ttH-shapes.root" + " w:$PROCESS$CHANNEL" + "\n")
-datacard.write(7*18*"-" + "\n")
+datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
+datacard.write("shapes *  * " + "ttH-shapes_" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_").replace(" ", "") + ".root" + " w:$PROCESS$CHANNEL" + "\n")
+datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
 datacard.write("{:<18}".format("bin"))
 
 cat_name = 0
 for k in NCAT:
-  name = "CAT"+str(k) + " "
-  datacard.write("{:<18}".format(name))
+  name = "CAT"+str(k)
+  datacard.write("{:>18}".format(name))
 
 datacard.write("\n")
 datacard.write("{:<18}".format("observation "))
 
 for k in NCAT:
-  nevents_observed = hData[k].Integral()
+  nevents_observed = hData[-k].Integral()
   print "Number of events observed: ", nevents_observed
-  datacard.write("{:<18}".format(str(nevents_observed)))
+  datacard.write("{:>18}".format(str(nevents_observed)))
 
 datacard.write("\n")
-datacard.write(7*18*"-" + "\n")
+datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
 datacard.write("{:<18}".format("bin"))
 
 for k in NCAT:
-  name = "{:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18}".format("CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k))
+  name = "{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k))
   datacard.write(name)
 datacard.write("\n")
 datacard.write("{:<18}".format("process"))
 
 for k in NCAT:
-  datacard.write("{:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18}".format("signal", "ttjets", "WWTo4Q", "ZZTo4Q", "WZ", "TTWJetsToQQ", "TTZToQQ", "ZJetsToQQ", "WJetsToQQ", "QCD"))
+  datacard.write("{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("signal", "ttjets", "WWTo4Q", "ZZTo4Q", "WZ", "TTWJetsToQQ", "TTZToQQ", "ZJetsToQQ", "WJetsToQQ", "QCD"))
 datacard.write("\n")
 datacard.write("{:<18}".format("process"))
 
 for k in NCAT:
-  datacard.write("{:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18} {:>18}".format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+  datacard.write("{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
 datacard.write("\n")
 
 datacard.write("{:<18}".format("rate"))
 
 for k in NCAT:
-  rate1 = h[0][k].Integral()
-  rate2 = h[1][k].Integral()
-  rate3 = h[2][k].Integral()
-  rate4 = h[3][k].Integral()
-  rate5 = h[4][k].Integral()
-  rate6 = h[5][k].Integral()
-  rate7 = h[6][k].Integral()
-  rate8 = h[7][k].Integral()
-  rate9 = h[8][k].Integral()
-  rate10 = hQCD[k].Integral()
+  rate1 = h[0][-k].Integral()
+  rate2 = h[1][-k].Integral()
+  rate3 = h[2][-k].Integral()
+  rate4 = h[3][-k].Integral()
+  rate5 = h[4][-k].Integral()
+  rate6 = h[5][-k].Integral()
+  rate7 = h[6][-k].Integral()
+  rate8 = h[7][-k].Integral()
+  rate9 = h[8][-k].Integral()
+  rate10 = hQCD[-k].Integral()
 
-  datacard.write("{:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f} {:>18.3f}".format(rate1, rate2, rate3, rate4, rate5, rate6, rate7, rate8, rate9, rate10))
+  datacard.write("{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}".format(rate1, rate2, rate3, rate4, rate5, rate6, rate7, rate8, rate9, rate10))
 
 datacard.write("\n")
 
-datacard.write(7*18*"-" + "\n")
+datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
 
-for i in FileName:
+for i in FileName[1:]:
   if TEMPLATE == "DATA":
-    datacard.write("{:<8} {:<4}".format(i, "lnU"))
+    datacard.write("{:<14}{:<4}".format(i, "lnU"))
     for j  in NCAT:
       for k in xrange(len(FileName)):
         if k!=FileName.index(i):
@@ -296,7 +318,7 @@ for i in FileName:
           datacard.write("{:>18}".format("1.5"))
   else:
     if i < 9:
-      datacard.write("{:<8} {:<4}".format(i, "lnU"))
+      datacard.write("{:<14}{:<4}".format(i, "lnU"))
       for j  in NCAT:
         for k in xrange(len(FileName)-7):
           if k!=FileName.index(i):
@@ -304,7 +326,7 @@ for i in FileName:
           else:
             datacard.write("{:>18}".format("1.5"))
     else:
-      datacard.write("{:<8} {:<4}".format("QCD", "lnU"))
+      datacard.write("{:<14}{:<4}".format("QCD", "lnU"))
       for j  in NCAT:
         for k in xrange(len(FileName)-7):
           if k!=FileName.index(i):
