@@ -6,16 +6,17 @@ import optparse
 parser = optparse.OptionParser()
 parser.add_option("--lumi",     action = "store", type = "float", dest = "LUMI",     default = 1000.)
 parser.add_option("--ncat",     action = "store", type = "string",   dest = "NCAT",     default = "0,1")
-parser.add_option("--template", action = "store", type = "str",   dest = "TEMPLATE", default = 'MC')
-# if TEMPLATE option is MC then QCD MC samples are used to extract QCD background shape on BDT variable, otherwise the data with loose b-tagging will be used.
+parser.add_option("--template", action = "store", type = "str",   dest = "TEMPLATE", default = 'MC') # if TEMPLATE option is MC then QCD MC samples are used to extract QCD background shape on BDT variable, otherwise the data with loose b-tagging will be used.
+parser.add_option("--on_EOS", action = "store", type = "int",   dest = "on_EOS", default = True)
 
 (options, args) = parser.parse_args()
 
 LUMI     = options.LUMI
 NCAT     = [int(i) for i in options.NCAT.split(',')]
 TEMPLATE = options.TEMPLATE
+on_EOS   = options.on_EOS
 
-print 'lumi:', LUMI, ' ncat:', NCAT, ' template:', TEMPLATE
+print 'lumi:', LUMI, ' ncat:', NCAT, ' template:', TEMPLATE, " on_EOS:", on_EOS
 
 gROOT.ForceStyle()
 
@@ -43,16 +44,23 @@ tr    = []
 h     = [[] for x in range(len(FileName))]
 hData = []
 
-dataf = TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_JetHT.root")  # data file
+if on_EOS:
+    dataf = TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_JetHT.root")
+else:
+  dataf = TFile.Open("flatTree_JetHT.root")
 
 COLOR = [ROOT.kRed, ROOT.kBlack, ROOT.kBlue, ROOT.kBlue-5, ROOT.kBlue-8, ROOT.kGreen, ROOT.kGreen-4, ROOT.kGray, ROOT.kRed+4]
-CUT   = [TCut("ht>500 && jetPt[5]>40 && nBJets==2"), TCut("ht>500 && jetPt[5]>40 && nBJets>2")]
+CUT   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && mva > -0.8"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && mva > -0.8")]
 
 can = TCanvas("Canvas0","Canvas0", 600, 600)
 can.Divide(2,1)
 
 for i in xrange(len(FileName)):
-  inf.append(TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_" + FileName[i] + ".root"))
+  if on_EOS:
+    inf.append(TFile.Open("root://eoscms//eos/cms/store/cmst3/user/kkousour/ttH/flat/flatTree_" + FileName[i] + ".root"))
+  else:
+    inf.append(TFile.Open("flatTree_" + FileName[i] + ".root"))
+
   print "flatTree_" + FileName[i] + ".root\t"
   
   if TEMPLATE == "MC":
