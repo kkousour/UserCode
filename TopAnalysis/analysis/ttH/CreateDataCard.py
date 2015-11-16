@@ -36,13 +36,13 @@ QCD_HT700to1000_sec   = 6.52e+03 #pb
 QCD_HT1000to1500_xsec = 1.06e+03 #pb
 QCD_HT1500to2000_xsec = 1.22e+02 #pb
 QCD_HT2000toInf_xsec  = 2.54e+01 #pb
-WWTo4Q                = 5.172+01 #pb
-ZZTo4Q                = 2.229+01 #pb
-WZ                    = 4.713+01 #pb
-TTWJetsToQQ           = 4.062-01 #pb
-TTZToQQ               = 5.297-01 #pb
-ZJetsToQQ             = 1.468+01 #pb
-WJetsToQQ             = 9.514+01 #pb
+WWTo4Q                = 5.17e+01 #pb
+ZZTo4Q                = 2.23e+01 #pb
+WZ                    = 4.71e+01 #pb
+TTWJetsToQQ           = 4.06e-01 #pb
+TTZToQQ               = 5.30e-01 #pb
+ZJetsToQQ             = 1.47e+01 #pb
+WJetsToQQ             = 9.51e+01 #pb
 
 XSEC = [ttH_xsec*Hbb_BR, ttbar_xsec, WWTo4Q, ZZTo4Q, WZ, TTWJetsToQQ, TTZToQQ, ZJetsToQQ, WJetsToQQ, QCD_HT200to300_xsec, QCD_HT300to500_xsec, QCD_HT500to700_xsec, QCD_HT700to1000_sec, QCD_HT1000to1500_xsec, QCD_HT1500to2000_xsec, QCD_HT2000toInf_xsec]
 
@@ -58,7 +58,9 @@ if on_EOS:
 else:
   dataf = TFile.Open("flatTree_JetHT.root")
 
-CUT   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && mva > -0.8"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && mva > -0.8")]
+CUT1   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])")]
+
+CUT2   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])")]
 
 can = TCanvas("Canvas0","Canvas0", 600, 600)
 can.Divide(2,1)
@@ -69,7 +71,7 @@ for i in xrange(len(FileName)):
   else:
     inf.append(TFile.Open("flatTree_" + FileName[i] + ".root"))
 
-  print "flatTree_" + FileName[i] + ".root\t"
+  print "flatTree_" + FileName[i] + ".root\t", XSEC[i]
   
   if TEMPLATE == "MC":
     tr.append(inf[-1].Get("hadtop/events"))
@@ -78,6 +80,8 @@ for i in xrange(len(FileName)):
     if i == 9: # gets the qcd shape from hadtopL directory
       tr.append(inf[-1].Get("hadtopL/events"))
       hpu = inf[-1].Get("hadtopL/pileup")
+      h_event_norm = inf[-1].Get("hadtopL/TriggerPass")
+      n_event_norm = h_event_norm.GetBinContent(1)
     else: # gets the other shapes from hadtop directory again
       tr.append(inf[-1].Get("hadtop/events"))
       hpu = inf[-1].Get("hadtop/pileup")
@@ -87,13 +91,21 @@ for i in xrange(len(FileName)):
     print i, k
     h[i].append(TH1F("h" + str(i) + str(k), "h" + str(i) + str(k), 25,-1,1))
     h[i][-k].Sumw2()
-    print CUT[k], tr[i].GetName()
-    tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT[k])
-    h[i][-k].SetLineWidth(2)
-    h[i][-k].SetLineColor(i)
+    print CUT1[k], tr[i].GetName()
+    
     if not (TEMPLATE == "DATA" and i == 9):
+      tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT1[k])
+      h[i][-k].SetLineWidth(2)
+      h[i][-k].SetLineColor(i)
       h[i][-k].Scale(LUMI*XSEC[i]/hpu.GetEntries())
       print hpu.GetEntries()
+    else:
+      tr[i].Draw("mva>>"  +  "h" + str(i) + str(k), CUT2[k])
+      h[i][-k].SetLineWidth(2)
+      h[i][-k].SetLineColor(i)    
+      number_of_gen  = 18459215.0 +  20086103.0 + 19478201.0 + 15011016.0 + 4717789.0 + 3404178.0 + 1865667.0
+      total_qcd_xsec = sum(XSEC[9:])
+      h[i][-k].Scale(LUMI*total_qcd_xsec/n_event_norm)
 
 hQCD = []
 
@@ -101,12 +113,12 @@ for k in NCAT:
   can.cd(k + 1)
   if TEMPLATE == "MC":
     hQCD.append(h[9][-k].Clone("hQCD" + str(k)))
-    hQCDk.Add(h[10][-k])
-    hQCDk.Add(h[11][-k])
-    hQCDk.Add(h[12][-k])
-    hQCDk.Add(h[13][-k])
-    hQCDk.Add(h[14][-k])
-    hQCDk.Add(h[15][-k])
+    hQCD[-k].Add(h[10][-k])
+    hQCD[-k].Add(h[11][-k])
+    hQCD[-k].Add(h[12][-k])
+    hQCD[-k].Add(h[13][-k])
+    hQCD[-k].Add(h[14][-k])
+    hQCD[-k].Add(h[15][-k])
   else:
     hQCD.append(h[9][-k].Clone("hQCD" + str(k)))
 
@@ -145,7 +157,7 @@ for k in NCAT:
   hData.append(TH1F("data_obsCAT" + str(k), "data_obsCAT" + str(k), 25, -1, 1))
   datatree = dataf.Get("hadtop/events")
   hpu = dataf.Get("hadtop/pileup")
-  datatree.Draw("mva>>"  +  hData[-k].GetName(), CUT[k])
+  datatree.Draw("mva>>"  +  hData[-k].GetName(), CUT1[k])
 
 workspace   = RooWorkspace("w","workspace")
 RooSigHist         = []
@@ -250,90 +262,148 @@ datacard = open("datacard_ttH_QCDfrom" + TEMPLATE + "_NCAT" + str(NCAT).replace(
 datacard.write("imax "  + str(len(NCAT)) + "\n")
 datacard.write("jmax *" + "\n")
 datacard.write("kmax *" + "\n")
-datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
+datacard.write((10*len(NCAT)+1)*25*"-" + "\n")
 datacard.write("shapes *  * " + "ttH-shapes_" + TEMPLATE + "_NCAT" + str(NCAT).replace("[","_").replace("]","").replace(",", "_").replace(" ", "") + ".root" + " w:$PROCESS$CHANNEL" + "\n")
-datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
-datacard.write("{:<18}".format("bin"))
+datacard.write((10*len(NCAT)+1)*25*"-" + "\n")
+datacard.write("{:<25}".format("bin"))
 
 cat_name = 0
 for k in NCAT:
   name = "CAT"+str(k)
-  datacard.write("{:>18}".format(name))
+  datacard.write("{:>25}".format(name))
 
 datacard.write("\n")
-datacard.write("{:<18}".format("observation "))
+datacard.write("{:<25}".format("observation "))
 
 for k in NCAT:
   nevents_observed = hData[-k].Integral()
   print "Number of events observed: ", nevents_observed
-  datacard.write("{:>18}".format(str(nevents_observed)))
+  datacard.write("{:>25}".format(str(nevents_observed)))
 
 datacard.write("\n")
-datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
-datacard.write("{:<18}".format("bin"))
+datacard.write((10*len(NCAT)+1)*25*"-" + "\n")
+datacard.write("{:<25}".format("bin"))
 
 for k in NCAT:
-  name = "{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k))
+  name = "{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k), "CAT" + str(k))
   datacard.write(name)
 datacard.write("\n")
-datacard.write("{:<18}".format("process"))
+datacard.write("{:<25}".format("process"))
 
 for k in NCAT:
-  datacard.write("{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("signal", "ttjets", "WWTo4Q", "ZZTo4Q", "WZ", "TTWJetsToQQ", "TTZToQQ", "ZJetsToQQ", "WJetsToQQ", "QCD"))
+  datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("signal", "ttjets", "WWTo4Q", "ZZTo4Q", "WZ", "TTWJetsToQQ", "TTZToQQ", "ZJetsToQQ", "WJetsToQQ", "QCD"))
 datacard.write("\n")
-datacard.write("{:<18}".format("process"))
+datacard.write("{:<25}".format("process"))
 
 for k in NCAT:
-  datacard.write("{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}{:>18}".format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+  datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
 datacard.write("\n")
 
-datacard.write("{:<18}".format("rate"))
+datacard.write("{:<25}".format("rate"))
 
 for k in NCAT:
-  rate1 = h[0][-k].Integral()
-  rate2 = h[1][-k].Integral()
-  rate3 = h[2][-k].Integral()
-  rate4 = h[3][-k].Integral()
-  rate5 = h[4][-k].Integral()
-  rate6 = h[5][-k].Integral()
-  rate7 = h[6][-k].Integral()
-  rate8 = h[7][-k].Integral()
-  rate9 = h[8][-k].Integral()
+  rate1  = h[0][-k].Integral()
+  rate2  = h[1][-k].Integral()
+  rate3  = h[2][-k].Integral()
+  rate4  = h[3][-k].Integral()
+  rate5  = h[4][-k].Integral()
+  rate6  = h[5][-k].Integral()
+  rate7  = h[6][-k].Integral()
+  rate8  = h[7][-k].Integral()
+  rate9  = h[8][-k].Integral()
   rate10 = hQCD[-k].Integral()
 
-  datacard.write("{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}{:>18.3f}".format(rate1, rate2, rate3, rate4, rate5, rate6, rate7, rate8, rate9, rate10))
+  datacard.write("{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}{:>25.3f}".format(rate1, rate2, rate3, rate4, rate5, rate6, rate7, rate8, rate9, rate10))
 
 datacard.write("\n")
 
-datacard.write((10*len(NCAT)+1)*18*"-" + "\n")
+bkg_unc  = str(1.2)
+qcd_unc  = str(1.5)
+lumi_unc = str(1.1)
+acc_jes  = str(1.1)
 
-for i in FileName[1:]:
-  if TEMPLATE == "DATA":
-    datacard.write("{:<14}{:<4}".format(i, "lnU"))
-    for j  in NCAT:
-      for k in xrange(len(FileName)):
-        if k!=FileName.index(i):
-          datacard.write("{:>18}".format("-"))
-        else:
-          datacard.write("{:>18}".format("1.5"))
-  else:
-    if i < 9:
-      datacard.write("{:<14}{:<4}".format(i, "lnU"))
-      for j  in NCAT:
-        for k in xrange(len(FileName)-7):
-          if k!=FileName.index(i):
-            datacard.write("{:>18}".format("-"))
-          else:
-            datacard.write("{:>18}".format("1.5"))
-    else:
-      datacard.write("{:<14}{:<4}".format("QCD", "lnU"))
-      for j  in NCAT:
-        for k in xrange(len(FileName)-7):
-          if k!=FileName.index(i):
-            datacard.write("{:>18}".format("-"))
-          else:
-            datacard.write("{:>18}".format("1.5"))
-  datacard.write("\n")
+datacard.write((10*len(NCAT)+1)*25*"-" + "\n")
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("lumi","lnN", lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format(lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, lumi_unc, "-"))
+datacard.write("\n")
 
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("acc_jes","lnN", acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format(acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, acc_jes, "-"))
+datacard.write("\n")
+datacard.write((10*len(NCAT)+1)*25*"-" + "\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TT"+"_Norm_CAT0","lnN", "-", bkg_unc, "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WWTo4Q"+"_Norm_CAT0","lnN", "-", "-", bkg_unc, "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("ZZTo4Q"+"_Norm_CAT0","lnN", "-", "-", "-", bkg_unc, "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WZ"+"_Norm_CAT0","lnN", "-", "-", "-", "-", bkg_unc, "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TTWJetsToQQ"+"_Norm_CAT0","lnN", "-", "-", "-", "-", "-", bkg_unc, "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TTZToQQ"+"_Norm_CAT0","lnN", "-", "-", "-", "-", "-", "-", bkg_unc, "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("ZJetsToQQ"+"_Norm_CAT0","lnN", "-", "-", "-", "-", "-", "-", "-", bkg_unc, "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WJetsToQQ"+"_Norm_CAT0","lnN", "-", "-", "-", "-", "-", "-", "-", "-", bkg_unc, "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("QCD"+"_Norm_CAT0","lnU", "-", "-", "-", "-", "-", "-", "-", "-", "-", qcd_unc))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+#------------------------------------------------------------------------------------
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TT"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", bkg_unc, "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WWTo4Q"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", bkg_unc, "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("ZZTo4Q"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", bkg_unc, "-", "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WZ"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", bkg_unc, "-", "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TTWJetsToQQ"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", bkg_unc, "-", "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("TTZToQQ"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", bkg_unc, "-", "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("ZJetsToQQ"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", bkg_unc, "-", "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("WJetsToQQ"+"_Norm_CAT1","lnN", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", bkg_unc, "-"))
+datacard.write("\n")
+
+datacard.write("{:<21}{:>4}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("QCD"+"_Norm_CAT1","lnU", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"))
+datacard.write("{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}{:>25}".format("-", "-", "-", "-", "-", "-", "-", "-", "-", qcd_unc))
+datacard.write("\n")
 
 datacard.close()
