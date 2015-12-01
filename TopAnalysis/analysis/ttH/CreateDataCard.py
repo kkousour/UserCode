@@ -158,6 +158,7 @@ RooTTWJetsToQQHist = []
 RooTTZToQQHist     = []
 RooZJetsToQQHist   = []
 RooWJetsToQQHist   = []
+RooVVHist          = []
 
 ObsPDF             = []
 SignalPDF          = []
@@ -185,45 +186,61 @@ VV_Norm            = []
 for k in xrange(len(NCAT)):
 
   MVA.append(RooRealVar("mva","mva", -1, 1))
-
-  RooObsHist.append(         RooDataHist("RooObsHist",         "RooObsHist",         RooArgList(MVA[-1]), hData[k]))
-  RooSigHist.append(         RooDataHist("RooSigHist",         "RooSigHist",         RooArgList(MVA[-1]), h[0][k]))
-  RooQCDHist.append(         RooDataHist("RooQCDHist",         "RooQCDHist",         RooArgList(MVA[-1]), hQCD[k]))
-  RooTTJHist.append(         RooDataHist("RooTTJHist",         "RooTTJHist",         RooArgList(MVA[-1]), h[1][k]))
-  RooWWTo4QHist.append(      RooDataHist("RooWWTo4QHist",      "RooWWTo4QHist",      RooArgList(MVA[-1]), h[2][k]))
-  RooZZTo4QHist.append(      RooDataHist("RooZZTo4QHist",      "RooZZTo4QHist",      RooArgList(MVA[-1]), h[3][k]))
-  RooWZHist.append(          RooDataHist("RooWZHist",          "RooWZHist",          RooArgList(MVA[-1]), h[4][k]))
-  RooTTWJetsToQQHist.append( RooDataHist("RooTTWJetsToQQHist", "RooTTWJetsToQQHist", RooArgList(MVA[-1]), h[5][k]))
-  RooTTZToQQHist.append(     RooDataHist("RooTTZToQQHist",     "RooTTZToQQHist",     RooArgList(MVA[-1]), h[6][k]))
-  RooZJetsToQQHist.append(   RooDataHist("RooZJetsToQQHist",   "RooZJetsToQQHist",   RooArgList(MVA[-1]), h[7][k]))
-  RooWJetsToQQHist.append(   RooDataHist("RooWJetsToQQHist",   "RooWJetsToQQHist",   RooArgList(MVA[-1]), h[8][k]))
+  if merge_VV == 0:
+    RooObsHist.append(         RooDataHist("RooObsHist",         "RooObsHist",         RooArgList(MVA[-1]), hData[k]))
+    RooSigHist.append(         RooDataHist("RooSigHist",         "RooSigHist",         RooArgList(MVA[-1]), h[0][k]))
+    RooQCDHist.append(         RooDataHist("RooQCDHist",         "RooQCDHist",         RooArgList(MVA[-1]), hQCD[k]))
+    RooTTJHist.append(         RooDataHist("RooTTJHist",         "RooTTJHist",         RooArgList(MVA[-1]), h[1][k]))
+    RooWWTo4QHist.append(      RooDataHist("RooWWTo4QHist",      "RooWWTo4QHist",      RooArgList(MVA[-1]), h[2][k]))
+    RooZZTo4QHist.append(      RooDataHist("RooZZTo4QHist",      "RooZZTo4QHist",      RooArgList(MVA[-1]), h[3][k]))
+    RooWZHist.append(          RooDataHist("RooWZHist",          "RooWZHist",          RooArgList(MVA[-1]), h[4][k]))
+    RooTTWJetsToQQHist.append( RooDataHist("RooTTWJetsToQQHist", "RooTTWJetsToQQHist", RooArgList(MVA[-1]), h[5][k]))
+    RooTTZToQQHist.append(     RooDataHist("RooTTZToQQHist",     "RooTTZToQQHist",     RooArgList(MVA[-1]), h[6][k]))
+    RooZJetsToQQHist.append(   RooDataHist("RooZJetsToQQHist",   "RooZJetsToQQHist",   RooArgList(MVA[-1]), h[7][k]))
+    RooWJetsToQQHist.append(   RooDataHist("RooWJetsToQQHist",   "RooWJetsToQQHist",   RooArgList(MVA[-1]), h[8][k]))
+  else:
+    RooObsHist.append(         RooDataHist("RooObsHist",         "RooObsHist",         RooArgList(MVA[-1]), hData[k]))
+    RooSigHist.append(         RooDataHist("RooSigHist",         "RooSigHist",         RooArgList(MVA[-1]), h[0][k]))
+    RooQCDHist.append(         RooDataHist("RooQCDHist",         "RooQCDHist",         RooArgList(MVA[-1]), hQCD[k]))
+    RooTTJHist.append(         RooDataHist("RooTTJHist",         "RooTTJHist",         RooArgList(MVA[-1]), h[1][k]))
+    RooTTWJetsToQQHist.append( RooDataHist("RooTTWJetsToQQHist", "RooTTWJetsToQQHist", RooArgList(MVA[-1]), h[5][k]))
+    RooTTZToQQHist.append(     RooDataHist("RooTTZToQQHist",     "RooTTZToQQHist",     RooArgList(MVA[-1]), h[6][k]))
+    RooZJetsToQQHist.append(   RooDataHist("RooZJetsToQQHist",   "RooZJetsToQQHist",   RooArgList(MVA[-1]), h[7][k]))
+    RooWJetsToQQHist.append(   RooDataHist("RooWJetsToQQHist",   "RooWJetsToQQHist",   RooArgList(MVA[-1]), h[8][k]))
+    h_temp = h[2][k].Clone("h_temp")
+    h_temp.Add(h[3][k])
+    h_temp.Add(h[4][k])
+    RooVVHist.append(          RooDataHist("RooVVHist",          "RooVVHist",          RooArgList(MVA[-1]), h_temp))
 
   RooObsHist[-1].Print()
 
   SignalPDF.append(      RooHistPdf("signalCAT"      + str(NCAT[k]), "signalCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooSigHist[-1]))
   QCDPDF.append(         RooHistPdf("QCDCAT"         + str(NCAT[k]), "QCDCAT"         + str(NCAT[k]), RooArgSet(MVA[-1]), RooQCDHist[-1]))
   TTJPDF.append(         RooHistPdf("ttjetsCAT"      + str(NCAT[k]), "ttjetsCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooTTJHist[-1]))
-  WWTo4QPDF.append(      RooHistPdf("WWTo4QCAT"      + str(NCAT[k]), "WWTo4QCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooWWTo4QHist[-1]))
-  ZZTo4QPDF.append(      RooHistPdf("ZZTo4QCAT"      + str(NCAT[k]), "ZZTo4QCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooZZTo4QHist[-1]))
-  WZPDF.append(          RooHistPdf("WZCAT"          + str(NCAT[k]), "WZCAT"          + str(NCAT[k]), RooArgSet(MVA[-1]), RooWZHist[-1]))
   TTWJetsToQQPDF.append( RooHistPdf("TTWJetsToQQCAT" + str(NCAT[k]), "TTWJetsToQQCAT" + str(NCAT[k]), RooArgSet(MVA[-1]), RooTTWJetsToQQHist[-1]))
   TTZToQQPDF.append(     RooHistPdf("TTZToQQCAT"     + str(NCAT[k]), "TTZToQQCAT"     + str(NCAT[k]), RooArgSet(MVA[-1]), RooTTZToQQHist[-1]))
   ZJetsToQQPDF.append(   RooHistPdf("ZJetsToQQCAT"   + str(NCAT[k]), "ZJetsToQQCAT"   + str(NCAT[k]), RooArgSet(MVA[-1]), RooZJetsToQQHist[-1]))
   WJetsToQQPDF.append(   RooHistPdf("WJetsToQQCAT"   + str(NCAT[k]), "WJetsToQQCAT"   + str(NCAT[k]), RooArgSet(MVA[-1]), RooWJetsToQQHist[-1]))
-
-  if merge_VV == 1:
-    VVPDF.append(RooAddPdf("VVCAT"   + str(NCAT[k]), "VVCAT"   + str(NCAT[k]), RooArgList(WZPDF[-1], ZZTo4QPDF[-1], WWTo4QPDF[-1])))
-
+  if merge_VV == 0:
+    WZPDF.append(          RooHistPdf("WZCAT"          + str(NCAT[k]), "WZCAT"          + str(NCAT[k]), RooArgSet(MVA[-1]), RooWZHist[-1]))
+    WWTo4QPDF.append(      RooHistPdf("WWTo4QCAT"      + str(NCAT[k]), "WWTo4QCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooWWTo4QHist[-1]))
+    ZZTo4QPDF.append(      RooHistPdf("ZZTo4QCAT"      + str(NCAT[k]), "ZZTo4QCAT"      + str(NCAT[k]), RooArgSet(MVA[-1]), RooZZTo4QHist[-1]))
+  else:
+    VVPDF.append(   RooHistPdf("VVCAT"   + str(NCAT[k]), "VVCAT"   + str(NCAT[k]), RooArgSet(MVA[-1]), RooVVHist[-1]))
 
   QCD_Norm.append(       RooRealVar("QCD_Norm_CAT"       + str(NCAT[k]), "QCD_Norm_CAT"       + str(NCAT[k]), 0, -1e+04, 1e+04))
   TTJ_Norm.append(       RooRealVar("TTJ_Norm_CAT"       + str(NCAT[k]), "TTJ_Norm_CAT"       + str(NCAT[k]), 0, -1e+04, 1e+04))
-  WWTo4Q_Norm.append(    RooRealVar("WWTo4Q_Norm_CAT"    + str(NCAT[k]), "WWTo4Q_Norm_CAT"    + str(NCAT[k]), 0, -1e+04, 1e+04))
-  ZZTo4Q_Norm.append(    RooRealVar("ZZTo4Q_Norm_CAT"    + str(NCAT[k]), "ZZTo4Q_Norm_CAT"    + str(NCAT[k]), 0, -1e+04, 1e+04))
-  WZ_Norm.append(        RooRealVar("WZ_Norm_CAT"        + str(NCAT[k]), "WZ_Norm_CAT"        + str(NCAT[k]), 0, -1e+04, 1e+04))
   TTZToQQ_Norm.append(   RooRealVar("TTZToQQ_Norm_CAT"   + str(NCAT[k]), "TTZToQQ_Norm_CAT"   + str(NCAT[k]), 0, -1e+04, 1e+04))
   ZJetsToQQ_Norm.append( RooRealVar("ZJetsToQQ_Norm_CAT" + str(NCAT[k]), "ZJetsToQQ_Norm_CAT" + str(NCAT[k]), 0, -1e+04, 1e+04))
   WJetsToQQ_Norm.append( RooRealVar("WJetsToQQ_Norm_CAT" + str(NCAT[k]), "WJetsToQQ_Norm_CAT" + str(NCAT[k]), 0, -1e+04, 1e+04))
-  VV_Norm.append(        RooRealVar("VV_Norm_CAT"        + str(NCAT[k]), "VV_Norm_CAT"        + str(NCAT[k]), 0, -1e+04, 1e+04))
+  
+  if merge_VV == 0:
+    WZ_Norm.append(        RooRealVar("WZ_Norm_CAT"        + str(NCAT[k]), "WZ_Norm_CAT"        + str(NCAT[k]), 0, -1e+04, 1e+04))
+    WWTo4Q_Norm.append(    RooRealVar("WWTo4Q_Norm_CAT"    + str(NCAT[k]), "WWTo4Q_Norm_CAT"    + str(NCAT[k]), 0, -1e+04, 1e+04))
+    ZZTo4Q_Norm.append(    RooRealVar("ZZTo4Q_Norm_CAT"    + str(NCAT[k]), "ZZTo4Q_Norm_CAT"    + str(NCAT[k]), 0, -1e+04, 1e+04))
+  else:
+    VV_Norm.append(        RooRealVar("VV_Norm_CAT"        + str(NCAT[k]), "VV_Norm_CAT"        + str(NCAT[k]), 0, -1e+04, 1e+04))
+
 
   getattr(workspace,'import')(SignalPDF[-1])
   getattr(workspace,'import')(QCDPDF[-1])
@@ -414,7 +431,6 @@ def write_parameter_info(name, category, type, i_par, n_par, uncertainty, width)
       else:
         datacard.write(col_format.format("-"))
   datacard.write("\n")
-
 
 for i in NCAT:
   for j in bkg_list:
