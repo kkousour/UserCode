@@ -60,9 +60,9 @@ if on_EOS:
 else:
   dataf = TFile.Open("flatTree_JetHT.root")
 
-CUT1   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])")]
+CUT1   = [TCut("ht>450 && jetPt[5]>40 && nBJets==4 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])"), TCut("ht>450 && jetPt[5]>40 && nBJets>4 && nLeptons == 0 && mva > -0.8 && (triggerBit[0] || triggerBit[2])")]
 
-CUT2   = [TCut("ht>450 && jetPt[5]>40 && nBJets==2 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])"), TCut("ht>450 && jetPt[5]>40 && nBJets>2 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])")]
+CUT2   = [TCut("ht>450 && jetPt[5]>40 && nBJets==4 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])"), TCut("ht>450 && jetPt[5]>40 && nBJets>4 && nLeptons == 0 && mva > -0.8 && (triggerBit[1] || triggerBit[3])")]
 
 can = TCanvas("Canvas0","Canvas0", 600, 600)
 can.Divide(2,1)
