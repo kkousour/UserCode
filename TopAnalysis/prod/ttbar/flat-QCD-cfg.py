@@ -18,24 +18,24 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 #############   JEC #################
-process.load("CondCore.DBCommon.CondDBCommon_cfi")
-from CondCore.DBCommon.CondDBSetup_cfi import *
-process.jec = cms.ESSource("PoolDBESSource",
-      DBParameters = cms.PSet(
-        messageLevel = cms.untracked.int32(0)
-        ),
-      timetype = cms.string('runnumber'),
-      toGet = cms.VPSet(
-      cms.PSet(
-            record = cms.string('JetCorrectionsRecord'),
-            tag    = cms.string('JetCorrectorParametersCollection_Summer15_50nsV2_MC_AK4PFchs'),
-            label  = cms.untracked.string('AK4PFchs')
-            ) 
-      ), 
-      connect = cms.string('sqlite:Summer15_50nsV2_MC.db')
-)
+#process.load("CondCore.DBCommon.CondDBCommon_cfi")
+#from CondCore.DBCommon.CondDBSetup_cfi import *
+#process.jec = cms.ESSource("PoolDBESSource",
+#      DBParameters = cms.PSet(
+#        messageLevel = cms.untracked.int32(0)
+#        ),
+#      timetype = cms.string('runnumber'),
+#      toGet = cms.VPSet(
+#      cms.PSet(
+#            record = cms.string('JetCorrectionsRecord'),
+#            tag    = cms.string('JetCorrectorParametersCollection_Summer15_50nsV2_MC_AK4PFchs'),
+#            label  = cms.untracked.string('AK4PFchs')
+#            ) 
+#      ), 
+#      connect = cms.string('sqlite:Summer15_50nsV2_MC.db')
+#)
 ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
-process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
+#process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
 
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 process.patJetCorrFactorsReapplyJEC = process.patJetCorrFactorsUpdated.clone(
@@ -77,14 +77,16 @@ process.hadtopBoost = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
   met              = cms.InputTag('slimmedMETs'),
   vertices         = cms.InputTag('offlineSlimmedPrimaryVertices'),
   rho              = cms.InputTag('fixedGridRhoFastjetAll'),
-  ptMin            = cms.double(200),
+  massMin          = cms.double(50),
+  ptMin            = cms.double(30),
+  ptMinLeading     = cms.double(300),
   etaMax           = cms.double(2.4),
-  btagMinThreshold = cms.double(0.814),
+  btagMinThreshold = cms.double(0.89),
   btagMaxThreshold = cms.double(1.1),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
+  xmlFile          = cms.string('factory_mva_Boosted_QCD__BDT_Category.weights.xml'),
   pu               = cms.untracked.string("addPileupInfo"),
   genparticles     = cms.untracked.InputTag('prunedGenParticles'),
-  
   triggerNames     = cms.vstring(
     'HLT_AK8PFJet360_TrimMass30_v',
     'HLT_PFJet200_v',
@@ -110,7 +112,7 @@ process.hadtop = cms.EDAnalyzer('TTbarFlatTreeProducer',
   htMin            = cms.double(400),
   etaMax           = cms.double(2.4),
   kinfit           = cms.string('kinFitTtFullHadEvent'),
-  btagMinThreshold = cms.double(0.814),
+  btagMinThreshold = cms.double(0.89),
   btagMaxThreshold = cms.double(1.1),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
   qgtagger         = cms.InputTag('QGTagger','qgLikelihood'),
@@ -142,8 +144,8 @@ process.load('TopQuarkAnalysis.TopKinFitter.TtFullHadKinFitProducer_cfi')
 
 process.kinFitTtFullHadEvent.jets                = 'goodJets'
 process.kinFitTtFullHadEvent.bTagAlgo            = 'pfCombinedInclusiveSecondaryVertexV2BJetTags'
-process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.814
-process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.814
+process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.89
+process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.89
 process.kinFitTtFullHadEvent.bTags               = 2
 process.kinFitTtFullHadEvent.maxNJets            = 8
 
@@ -161,10 +163,10 @@ process.p = cms.Path(
    process.goodJets + 
    process.QGTagger + 
    process.kinFitTtFullHadEvent + 
-   process.kinFitTtFullHadEventNoBtag +
+   #process.kinFitTtFullHadEventNoBtag +
    process.kinFitTtFullHadEventOneBtag +
    process.hadtop +
-   process.hadtopNoBtag +
+   #process.hadtopNoBtag +
    process.hadtopOneBtag +
    process.hadtopBoost
 )

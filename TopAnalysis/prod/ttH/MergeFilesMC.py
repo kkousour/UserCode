@@ -5,14 +5,14 @@ from KKousour.TopAnalysis.eostools import *
 path = '/store/cmst3/user/kkousour/ttH/'
  
 sample = [
-  "/TT_TuneCUETP8M1_13TeV-powheg-pythia8",
-  "/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8", 
-  "/QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
-  "/QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
-  "/QCD_HT500to700_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
-  "/QCD_HT700to1000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
-  "/QCD_HT1000to1500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
-  "/QCD_HT1500to2000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/TT_TuneCUETP8M1_13TeV-powheg-pythia8",
+  #"/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8", 
+  #"/QCD_HT200to300_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/QCD_HT500to700_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/QCD_HT700to1000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/QCD_HT1000to1500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
+  #"/QCD_HT1500to2000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8",
   "/QCD_HT2000toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8" 
 ]
 

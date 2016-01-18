@@ -42,8 +42,11 @@ BoostedTTbarFlatTreeProducer::BoostedTTbarFlatTreeProducer(edm::ParameterSet con
   srcRho_             = cfg.getParameter<edm::InputTag>                      ("rho"); 
   srcVtx_             = cfg.getParameter<edm::InputTag>                      ("vertices");
   srcBtag_            = cfg.getParameter<std::string>                        ("btagger");
+  xmlFile_            = cfg.getParameter<std::string>                        ("xmlFile");
   etaMax_             = cfg.getParameter<double>                             ("etaMax");
   ptMin_              = cfg.getParameter<double>                             ("ptMin");
+  ptMinLeading_       = cfg.getParameter<double>                             ("ptMinLeading");
+  massMin_            = cfg.getParameter<double>                             ("massMin");
   btagMinThreshold_   = cfg.getParameter<double>                             ("btagMinThreshold");
   btagMaxThreshold_   = cfg.getParameter<double>                             ("btagMaxThreshold");
   srcPU_              = cfg.getUntrackedParameter<std::string>               ("pu","");
@@ -80,6 +83,7 @@ void BoostedTTbarFlatTreeProducer::beginJob()
   outTree_->Branch("nBJets"               ,&nBJets_            ,"nBJets_/I");
   outTree_->Branch("rho"                  ,&rho_               ,"rho_/F");
   outTree_->Branch("ht"                   ,&ht_                ,"ht_/F");
+  outTree_->Branch("mva"                  ,&mva_               ,"mva_/F");
   outTree_->Branch("met"                  ,&met_               ,"met_/F");
   outTree_->Branch("metSig"               ,&metSig_            ,"metSig_/F");
   outTree_->Branch("mJJ"                  ,&mJJ_               ,"mJJ_/F");
@@ -151,6 +155,8 @@ void BoostedTTbarFlatTreeProducer::beginJob()
   triggerPre_ = new std::vector<int>;
   outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
   outTree_->Branch("triggerPre"           ,"vector<int>"       ,&triggerPre_);
+  //------------------------------------------------------------------
+  discr_ = new BoostedDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFile_);
   //------------------- MC ---------------------------------
   outTree_->Branch("decay"                ,&decay_             ,"decay_/I");
   outTree_->Branch("npu"                  ,&npu_               ,"npu_/I");
@@ -190,6 +196,7 @@ void BoostedTTbarFlatTreeProducer::endJob()
   delete lEta_;
   delete lPhi_;
   delete lE_;
+  delete discr_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 bool BoostedTTbarFlatTreeProducer::isGoodJet(const pat::Jet &jet)
@@ -487,13 +494,26 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
 
   cutFlowHisto_->Fill("All",1);
   if (nJets_ > 1) {
-    dPhiJJ_ = fabs(deltaPhi(vP4[0].phi(),vP4[1].phi())); 
-    dRJJ_   = deltaR(vP4[0],vP4[1]);
-    mJJ_    = (vP4[0]+vP4[1]).mass();
-    yJJ_    = (vP4[0]+vP4[1]).Rapidity();
-    ptJJ_   = (vP4[0]+vP4[1]).pt();
     cutFlowHisto_->Fill("nJets",1);
-    outTree_->Fill();  
+    if ((*pt_)[0] > ptMinLeading_) {
+      cutFlowHisto_->Fill("ptMinLeading",1);
+      dPhiJJ_ = fabs(deltaPhi(vP4[0].phi(),vP4[1].phi())); 
+      dRJJ_   = deltaR(vP4[0],vP4[1]);
+      mJJ_    = (vP4[0]+vP4[1]).mass();
+      yJJ_    = (vP4[0]+vP4[1]).Rapidity();
+      ptJJ_   = (vP4[0]+vP4[1]).pt();
+      if (nBJets_ > -1) {
+        cutFlowHisto_->Fill("nBJets",1); 
+        if ((*massSoftDrop_)[0] > massMin_) {
+          cutFlowHisto_->Fill("massSoftDrop0",1);
+          if ((*nSubJets_)[0] > 1) {
+            cutFlowHisto_->Fill("nSubJets0",1);
+            mva_ = discr_->eval((*massSoftDrop_)[0],(*massSub0_)[0],(*massSub1_)[0],(*tau3_)[0]/(*tau2_)[0],(*tau3_)[0]/(*tau1_)[0]);
+            outTree_->Fill();  
+          }
+        }
+      }
+    }
   }
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -515,6 +535,7 @@ void BoostedTTbarFlatTreeProducer::initialize()
   met_            = -1;
   metSig_         = -1;
   ht_             = -1;
+  mva_            = -999;
   flavor_         ->clear();
   nSubJets_       ->clear();
   nBSubJets_      ->clear();

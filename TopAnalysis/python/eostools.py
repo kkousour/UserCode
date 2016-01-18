@@ -7,10 +7,13 @@ import os
 import re
 import pprint
 import shutil
+import io
+import zlib
 
 def setCAFPath():
     """Hack to get the CAF scripts on the PYTHONPATH"""
     caf = '/afs/cern.ch/cms/caf/python'
+
     if caf not in sys.path:
         sys.path.append(caf)
 setCAFPath()
@@ -18,11 +21,11 @@ import cmsIO
 
 def runXRDCommand(path, cmd, *args):
     """Run an xrd command.
-
     !!! Will, what is happening in case of problem?
     ??? At some point, should return a list of lines instead of a string."""
     
     lfn = eosToLFN(path)
+    #print "lfn:", lfn, cmd
     tokens = cmsIO.splitPFN(lfnToPFN(lfn))
     
     command = ['xrd', tokens[1], cmd, tokens[2]]
@@ -33,7 +36,6 @@ def runXRDCommand(path, cmd, *args):
 
 def runEOSCommand(path, cmd, *args):
     """Run an eos command.
-
     !!! Will, when the EOS command fails, it passes silently...
     I think we should really try and raise an exception in case of problems.
     should be possible as the return code is provided in the tuple returned by runner."""
@@ -56,15 +58,14 @@ def isLFN( path ):
 
 def isEOS( path ):
     """Tests whether this path is a CMS EOS (name starts with /eos...)"""
-    return path.startswith('/eos')
+    return path.startswith('/eos') or path.startswith('root://eoscms.cern.ch//eos/cms')
 
 def eosToLFN( path ):
     """Converts a EOS PFN to an LFN.
-
     Just strip out /eos/cms from path.
     If this string is not found, return path.
     ??? Shouldn't we raise an exception instead?"""
-    return path.replace('/eos/cms','')
+    return path.replace('root://eoscms.cern.ch/', '').replace('/eos/cms','')
 
 #also define an alias for backwards compatibility
 castorToLFN = eosToLFN
@@ -74,12 +75,17 @@ def lfnToPFN( path, tfcProt = 'rfio'):
     /store/cmst3/user/cbern/CMG/TauPlusX/Run2011A-03Oct2011-v1/AOD/V2/PAT_CMG_V2_4_0/H2TAUTAU_Nov21
     ->
     root://eoscms//eos/cms/store/cmst3/user/cbern/CMG/TauPlusX/Run2011A-03Oct2011-v1/AOD/V2/PAT_CMG_V2_4_0/H2TAUTAU_Nov21?svcClass=cmst3&stageHost=castorcms
-
     This function only checks path, and does not access the storage system.
     If the path is in /store/cmst3, it assumes that the CMST3 svcClass is to be used.
     Otherwise, is uses the default one. 
     
     ??? what is tfcprot? """
+
+    if path.startswith("/store/"):
+        path = path.replace("/store/","root://eoscms.cern.ch//eos/cms/store/")
+    if path.startswith("/pnfs/psi.ch/cms/trivcat/"):
+        path = path.replace("/pnfs/psi.ch/cms/trivcat/","root://t3se01.psi.ch//")
+    #print "path to cmsFile():", path
     entity = cmsIO.cmsFile( path, tfcProt )
 #    tokens = cmsIO.splitPFN(entity.pfn)
     pfn = '%s://%s//%s/' % (entity.protocol,entity.host,entity.path)
@@ -96,12 +102,11 @@ def lfnToPFN( path, tfcProt = 'rfio'):
 
 def lfnToEOS( path ):
     """Converts LFN to EOS.
-
     If path is not an LFN in the first place, return path.
     ??? shouldn't we raise an exception?"""
     if isLFN(path):
-        pfn = '/eos/cms/' + path
-        return pfn.replace('//','/') 
+        pfn = 'root://eoscms.cern.ch//eos/cms/' + path
+        return pfn.replace('//store','/store') 
     else:
         return path
 
@@ -113,9 +118,9 @@ def isEOSDir( path ):
     /store/...
     or
     /eos/cms/store/...
-
+    or
+    root://eoscms.cern.ch//eos/cms/
     Otherwise, returns False.
-
     WARNING!! This function does not check for path existence,
     and returns true also for plain files.
     !!! Will, is my summary correct? 
@@ -125,7 +130,7 @@ def isEOSDir( path ):
         # COLIN: I think this condition could be removed,
         # as it duplicates the following one. 
         return False
-    if not path.startswith('/eos') and not path.startswith('/store'):
+    if not path.startswith('/eos') and not path.startswith('/store') and not path.startswith('root://eoscms.cern.ch//eos/cms/'):
         # neither an EOS PFN or a LFN.
         return False
     # at this stage, we must have an EOS PFN or an LFN
@@ -157,7 +162,6 @@ ls: s: No such file or directory
 ls: f: No such file or directory
 ls: d: No such file or directory
 ls: /store: No such file or directory
-
 ls: s: No such file or directory
 ls: t: No such file or directory
 ls: o: No such file or directory
@@ -172,7 +176,6 @@ ls: s: No such file or directory
 ls: f: No such file or directory
 ls: d: No such file or directory
 ls: /store: No such file or directory
-
 False
     """
     _, _, ret = runEOSCommand( path, 'ls')
@@ -184,7 +187,6 @@ isCastorFile = isEOSFile
 
 def fileExists( path ):
     """Returns true if path is a file or directory stored locally, or on EOS.
-
     This function checks for the file or directory existence."""
 
     eos = isEOSDir(path)
@@ -213,10 +215,28 @@ def eosDirSize(path):
             pass
     return size/1024/1024/1024
 
+def fileChecksum(path):
+    '''Returns the checksum of a file (local or on EOS).'''
+    checksum='ERROR'
+    if not fileExists(path): raise RuntimeError, 'File does not exist.'
+    if isEOS(path):
+        lfn = eosToLFN(path)
+        res = runEOSCommand(lfn, 'find', '--checksum')
+        output = res[0].split('\n')[0]
+        checksum = output.split('=')[2]
+    else:
+        f = io.open(path,'r+b')
+        checksum = 1
+        buf = ''
+        while True:
+            buf = f.read(1024*1024*10) # 10 MB buffer
+            if len(buf)==0: break # EOF reached
+            checksum = zlib.adler32(buf,checksum)
+        checksum = str(hex(checksum & 0xffffffff))[2:]
+    return checksum.rjust(8,'0')
 
 def createEOSDir( path ):
     """Makes a directory in EOS
-
     ???Will, I'm quite worried by the fact that if this path already exists, and is
     a file, everything will 'work'. But then we have a file, and not a directory,
     while we expect a dir..."""
@@ -247,10 +267,8 @@ def mkdir(path):
 
 def isDirectory(path):
     """Returns True if path is a directory on EOS.
-
     Tests for file existence. 
     This function returns False for EOS files, and crashes with local paths
-
     ???Will, this function also seems to work for paths like:
     /eos/cms/...
     ??? I think that it should work also for local files, see isFile."""
@@ -260,7 +278,6 @@ def isDirectory(path):
 
 def isFile(path):
     """Returns True if a path is a file.
-
     Tests for file existence.
     Returns False for directories.
     Works on EOS and local paths.
@@ -317,8 +334,7 @@ def listFiles(path, rec = False, full_info = False):
             if full_info:
                 result.append( tokens)
             else:
-                result.append( tokens[4])
-    # print result
+                result.append( tokens[4] )
     return result
 
 def which(cmd):
@@ -350,7 +366,6 @@ def ls_EOS(path, rec = False):
 
 def rm(path, rec=False):
     """rm, works on EOS and locally.
-
     Colin: should implement a -f mode and a confirmation when deleting dirs recursively."""
     # print 'rm ', path
     path = lfnToEOS(path)
@@ -369,7 +384,6 @@ def rm(path, rec=False):
 
 def remove( files, rec = False):
     """Remove a list of files and directories, possibly recursively
-
     Colin: Is that obsolete? why not use rm?"""
     for path in files:
         lfn = eosToLFN(path)
@@ -390,6 +404,7 @@ def cat(path):
     """cat, works on EOS and locally"""
     path = lfnToEOS(path)
     if isEOS(path):
+        #print "the file to cat is:", path
         out, err, _ = runXRDCommand(path,'cat') 
         lines = []
         if out:
@@ -416,7 +431,6 @@ def cat(path):
     
 def xrdcp(src, dest):
     """Does a copy of files using xrd.
-
     Colin: implement a generic cp interface as done for rm, ls, etc?"""
     
     recursive = False
@@ -447,7 +461,7 @@ def xrdcp(src, dest):
     elif os.path.exists(dest):
         pfn_dest = dest
 
-    command = ['xrdcp','-force']
+    command = ['xrdcp', '--force']
     if recursive:
         # print 'recursive'
         topDir = src.rstrip('/').split('/')[-1]
@@ -482,7 +496,7 @@ def xrdcp(src, dest):
 def _xrdcpSingleFile( pfn_src, pfn_dest):
     """Copies a single file using xrd."""
     
-    command = ['xrdcp','-force']
+    command = ['xrdcp', '--force']
     command.append(pfn_src)
     command.append(pfn_dest)
     # print ' '.join(command)
@@ -508,7 +522,8 @@ def matchingFiles( path, regexp):
 
     # print path, regexp
     pattern = re.compile( regexp )
-    files = ls_EOS(path)
+    #files = ls_EOS(path)
+    files = ls(path)
     # print files
     return [f for f in files if pattern.match(os.path.basename(f)) is not None]
 

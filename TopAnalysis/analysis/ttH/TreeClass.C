@@ -11,7 +11,7 @@ using std::endl;
 void TreeClass::Loop(TDirectory *DIR)
 {
   //---- Number of categories ---------------
-  const int NCAT = 4;
+  const int NCAT = 2;
   //---- define histograms ------------------
   char name[1000];
   const int NVAR = 23;
@@ -66,38 +66,29 @@ void TreeClass::Loop(TDirectory *DIR)
     fChain->GetEntry(jentry);
     bool cut_trigger = ((*triggerBit)[0] || (*triggerBit)[2]);
     bool cut_leptons = (nLeptons == 0); 
-    bool cut_met     = (met < 80);
-    bool cut_ht      = (ht > 400);
+    bool cut_ht      = (ht > 450);
     bool cut_jetPt   = ((*jetPt)[5] > 40);
-    bool cut_mva     = (mva > -1);
     bool cut_nJets   = (nJets > 5);
     bool cut_nBJets  = (nBJets > 1);
+    bool cut_status  = (status == 0);
 
     if (!cut_trigger)  continue;
     if (!cut_leptons)  continue;
-    if (!cut_met)      continue;
     if (!cut_ht)       continue;
     if (!cut_jetPt)    continue;
     if (!cut_nJets)    continue;
     if (!cut_nBJets)   continue;
-    if (!cut_mva)      continue;
+    if (!cut_status)   continue;
 
     int category(0);
-    if (nBJets > 1) {
-      category = 0;
-    }
-    if (nBJets == 2 && status == 0) {
+    
+    if (nBJets == 2) {
       category = 1;
     } 
-    if (nBJets == 2 && status < 0) {
+    if (nBJets > 2) {
       category = 2;
     }
-    if (nBJets > 2 && status == 0) {
-      category = 3;
-    }
-    if (nBJets > 2 && status < 0) {
-      category = 4;
-    }
+    
     hCat->Fill(category);
     float x[NVAR] = {mva,ht,htBtag,float(nvtx),float(nJets),float(nBJets),met,
                      sphericity,aplanarity,foxWolfram[0],foxWolfram[1],foxWolfram[2],foxWolfram[3],

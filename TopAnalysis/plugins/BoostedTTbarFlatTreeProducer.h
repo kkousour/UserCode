@@ -14,6 +14,7 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "KKousour/TopAnalysis/plugins/BoostedDiscriminatorMVA.h"
 #include "TTree.h"
 #include "TH1F.h"
 #include "TLorentzVector.h"
@@ -38,8 +39,10 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     void initialize();
     //---- configurable parameters --------   
     edm::InputTag srcJets_,srcMET_,srcMuons_,srcElectrons_,srcRho_,srcVtx_,triggerResults_,triggerPrescales_,srcGenParticles_;
-    std::string srcBtag_,srcPU_;
+    std::string srcBtag_,srcPU_,xmlFile_;
+    double massMin_;
     double ptMin_;
+    double ptMinLeading_;
     double etaMax_;
     double btagMinThreshold_,btagMaxThreshold_;
     edm::Service<TFileService> fs_;
@@ -51,7 +54,7 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     //---- output TREE variables ------
     //---- global event variables -----
     int   run_,evt_,nVtx_,lumi_,nJets_,nBJets_,nLeptons_;
-    float rho_,met_,metSig_,ht_;
+    float rho_,met_,metSig_,ht_,mva_;
     std::vector<bool> *triggerBit_;
     std::vector<int>  *triggerPre_;
     //---- top variables --------------
@@ -64,6 +67,8 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     //---- lepton variables -----------
     std::vector<int>   *lId_;
     std::vector<float> *lPt_,*lEta_,*lPhi_,*lE_,*lIso_;
+    //---- MVA discriminator ----------
+    BoostedDiscriminatorMVA *discr_;
     //---- MC variables ---------------
     int npu_,decay_;
 };

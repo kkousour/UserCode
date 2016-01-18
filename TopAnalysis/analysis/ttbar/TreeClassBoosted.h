@@ -52,6 +52,7 @@ public :
    Int_t           nBJets;
    Float_t         rho;
    Float_t         ht;
+   Float_t         mva;
    Float_t         met;
    Float_t         metSig;
    Float_t         mJJ;
@@ -103,6 +104,7 @@ public :
    TBranch        *b_nBJets_;   //!
    TBranch        *b_rho_;   //!
    TBranch        *b_ht_;   //!
+   TBranch        *b_mva_;   //!
    TBranch        *b_met_;   //!
    TBranch        *b_metSig_;   //!
    TBranch        *b_mJJ_;   //!
@@ -256,6 +258,7 @@ void TreeClassBoosted::Init(TTree *tree)
    fChain->SetBranchAddress("nBJets", &nBJets, &b_nBJets_);
    fChain->SetBranchAddress("rho", &rho, &b_rho_);
    fChain->SetBranchAddress("ht", &ht, &b_ht_);
+   fChain->SetBranchAddress("mva", &mva, &b_mva_);
    fChain->SetBranchAddress("met", &met, &b_met_);
    fChain->SetBranchAddress("metSig", &metSig, &b_metSig_);
    fChain->SetBranchAddress("mJJ", &mJJ, &b_mJJ_);

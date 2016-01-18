@@ -9,7 +9,7 @@
 void FillHistograms(TString SAMPLE)
 {
   cout<<"Processing sample "<<SAMPLE<<endl;
-  TString PATH("");
+  TString PATH("../../prod/ttbar/");
   TFile *inf  = TFile::Open(PATH+"flatTree_"+SAMPLE+".root");
   TFile *outf = TFile::Open(TString::Format("Histo_%s.root",SAMPLE.Data()),"RECREATE");
 

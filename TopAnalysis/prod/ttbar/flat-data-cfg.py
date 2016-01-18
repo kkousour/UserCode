@@ -81,12 +81,14 @@ process.hadtopBoost = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
   met              = cms.InputTag('slimmedMETs'),
   vertices         = cms.InputTag('offlineSlimmedPrimaryVertices'),
   rho              = cms.InputTag('fixedGridRhoFastjetAll'),
-  ptMin            = cms.double(200),
+  massMin          = cms.double(50),
+  ptMin            = cms.double(30),
+  ptMinLeading     = cms.double(300),
   etaMax           = cms.double(2.4),
-  btagMinThreshold = cms.double(0.814),
+  btagMinThreshold = cms.double(0.89),
   btagMaxThreshold = cms.double(1.1),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
-  
+  xmlFile          = cms.string('factory_mva_Boosted_QCD__BDT_Category.weights.xml'),
   triggerNames     = cms.vstring(
     'HLT_AK8PFJet360_TrimMass30_v',
     'HLT_PFJet200_v',
@@ -112,7 +114,7 @@ process.hadtop = cms.EDAnalyzer('TTbarFlatTreeProducer',
   htMin            = cms.double(400),
   etaMax           = cms.double(2.4),
   kinfit           = cms.string('kinFitTtFullHadEvent'),
-  btagMinThreshold = cms.double(0.814),
+  btagMinThreshold = cms.double(0.89),
   btagMaxThreshold = cms.double(1.1),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
   qgtagger         = cms.InputTag('QGTagger','qgLikelihood'),
@@ -144,15 +146,19 @@ process.load('TopQuarkAnalysis.TopKinFitter.TtFullHadKinFitProducer_cfi')
 
 process.kinFitTtFullHadEvent.jets                = 'goodJets'
 process.kinFitTtFullHadEvent.bTagAlgo            = 'pfCombinedInclusiveSecondaryVertexV2BJetTags'
-process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.814
-process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.814
+process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.89
+process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.89
 process.kinFitTtFullHadEvent.bTags               = 2
 process.kinFitTtFullHadEvent.maxNJets            = 8
 
 process.kinFitTtFullHadEventOneBtag = process.kinFitTtFullHadEvent.clone(bTags = 1)
 
+#process.json = cms.EDFilter("ApplyJSON",
+#  jsonFile = cms.string("Cert_246908-257599_13TeV_PromptReco_Collisions15_25ns_JSON.txt")
+#)
 
 process.p = cms.Path(
+   #process.json +
    process.patJetCorrFactorsReapplyJEC +
    process.patJetCorrFactorsReapplyJECAK8 +
    process.patJetsReapplyJEC +

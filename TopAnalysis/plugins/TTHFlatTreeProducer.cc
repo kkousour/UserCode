@@ -662,7 +662,7 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
       if (ht_ > htMin_) {
         cutFlowHisto_->Fill("ht",1);
         if (nJets_ > 5 && nBJets_ > 1) {
-          mva_ = discr_->eval(status_,nBJets_,nJets_,ht_,(*pt_)[0],(*pt_)[1],(*pt_)[2],(*pt_)[3],(*pt_)[4],(*pt_)[5],mbbMin_,dRbbMin_,sphericity_,aplanarity_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
+          mva_ = discr_->eval(status_,nBJets_,nJets_,ht_,(*pt_)[2],(*pt_)[3],(*pt_)[4],(*pt_)[5],mbbMin_,dRbbMin_,sphericity_,aplanarity_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
         }
         outTree_->Fill();     
       }

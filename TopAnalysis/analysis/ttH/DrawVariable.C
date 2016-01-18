@@ -1,11 +1,11 @@
-void DrawVariable(TString VAR,bool SHAPE,int REBIN,float XMIN,float XMAX,TString XTITLE)
+void DrawVariable(TString VAR,bool SHAPE,int REBIN,float XMIN,float XMAX,TString XTITLE,bool PRINT)
 {
   gROOT->ForceStyle();
   const int N = 10;
   TString SAMPLE[N] = {"JetHT","ttHJetTobb_M125","TT","QCD_HT200to300","QCD_HT300to500",
                        "QCD_HT500to700","QCD_HT700to1000","QCD_HT1000to1500","QCD_HT1500to2000","QCD_HT2000toInf"};
   float XSEC[N]     = {1.0,0.577*0.5085,832,1.74e+6,3.67e+5,2.94e+4,6.524e+03,1.064e+03,121.5,2.542e+01};
-  float LUMI(16);
+  float LUMI(1280.23);
   TFile *inf[N];
   TH1F  *h[N];
   int COLOR[N] = {kBlack,kRed-10,kYellow-10,kBlue-10,kBlue-9,kBlue-8,kBlue-7,kBlue-6,kBlue-5,kBlue-4};
@@ -51,6 +51,11 @@ void DrawVariable(TString VAR,bool SHAPE,int REBIN,float XMIN,float XMAX,TString
     kfactor = (h[0]->Integral()-h[2]->Integral())/hQCD->Integral();
   }  
   hQCD->Scale(kfactor);
+
+  TH1F *hBkg = (TH1F*)hQCD->Clone("hBkg");
+  hBkg->Add(h[2]);
+  hBkg->SetFillColor(kGray);
+
   cout<<"Data events:  "<<h[0]->Integral()<<endl;
   cout<<"QCD events:   "<<hQCD->Integral()<<endl;
   cout<<"TTbar events: "<<h[2]->Integral()<<endl;
@@ -69,12 +74,6 @@ void DrawVariable(TString VAR,bool SHAPE,int REBIN,float XMIN,float XMAX,TString
   hs->Add(h[9]);        
   */
   hs->Add(hQCD);
-
-  TH1F *hBkg = (TH1F*)hQCD->Clone("hBkg");
-  hBkg->Scale(kfactor);
-  hBkg->Add(h[2]);
-
-  hBkg->SetFillColor(kGray);
 
   TH1F *hRatio = (TH1F*)h[0]->Clone("Ratio");
   hRatio->SetLineWidth(1);
@@ -146,8 +145,10 @@ void DrawVariable(TString VAR,bool SHAPE,int REBIN,float XMIN,float XMAX,TString
     hRatio->GetYaxis()->SetRangeUser(0.5,1.5);
     hRatio->GetYaxis()->SetNdivisions(505);
     hRatio->Draw();
-
-    can->Print("can_"+VAR+"_abs.pdf"); 
+    if (PRINT) {
+      can->Print("plots/can_"+VAR+"_abs.pdf"); 
+      can->Print("plots/can_"+VAR+"_abs.png");
+    }
   }
 }
 
