@@ -55,8 +55,13 @@ TTHFlatTreeProducer::TTHFlatTreeProducer(edm::ParameterSet const& cfg)
   partonsPToken         = consumes<edm::View<pat::Particle> >(edm::InputTag(kinfit_,"PartonsLightP"));
   partonsPbarToken      = consumes<edm::View<pat::Particle> >(edm::InputTag(kinfit_,"PartonsLightPBar"));
   srcBtag_              = cfg.getParameter<std::string>                        ("btagger");
-  xmlFileQCD_           = cfg.getParameter<std::string>                        ("xmlFileQCD");
-  xmlFileTTbar_         = cfg.getParameter<std::string>                        ("xmlFileTTbar");
+  
+  
+  xmlFileQCD_CAT0_      = cfg.getParameter<std::string>                        ("xmlFileQCD_CAT0");
+  xmlFileQCD_CAT1_      = cfg.getParameter<std::string>                        ("xmlFileQCD_CAT1");
+  xmlFileTTbar_CAT0_	= cfg.getParameter<std::string>			       ("xmlFileTTbar_CAT0");
+  xmlFileTTbar_CAT1_	= cfg.getParameter<std::string>			       ("xmlFileTTbar_CAT1");
+  
   nJetsMin_             = cfg.getParameter<int>                                ("nJetsMin");
   nBJetsMin_            = cfg.getParameter<int>                                ("nBJetsMin");
   etaMax_               = cfg.getParameter<double>                             ("etaMax");
@@ -182,8 +187,12 @@ void TTHFlatTreeProducer::beginJob()
   outTree_->Branch("lepEnergy"            ,"vector<float>"     ,&lE_);
   outTree_->Branch("lepIso"               ,"vector<float>"     ,&lIso_);
   //------------------------------------------------------------------
-  discrQCD_    = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileQCD_);
-  discrTTbar_  = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTbar_);
+  
+  discrQCD_CAT0_   = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileQCD_CAT0_, "CAT0",  "QCD");
+  discrQCD_CAT1_   = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileQCD_CAT1_, "CAT1",  "QCD");
+  discrTTbar_CAT0_ = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTbar_CAT0_,"CAT0", "TTbar");
+  discrTTbar_CAT1_ = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTbar_CAT1_,"CAT1", "TTbar");
+  
   triggerBit_  = new std::vector<bool>;
   triggerPre_  = new std::vector<int>;
   outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
@@ -222,8 +231,10 @@ void TTHFlatTreeProducer::endJob()
   delete muf_;
   delete elf_;
   delete puMva_;
-  delete discrQCD_;
-  delete discrTTbar_;
+  delete discrQCD_CAT0_;  
+  delete discrQCD_CAT1_;  
+  delete discrTTbar_CAT0_;
+  delete discrTTbar_CAT1_;
   delete triggerBit_;
   delete triggerPre_;
   delete lId_;
@@ -727,9 +738,25 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
         if (ht_ > htMin_) {
           cutFlowHisto_->Fill("ht",1);
           if (nJets_ > 5 && nBJets_ > 1 && status_>-1) {
-            mvaQCD_ = discrQCD_->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
-            mvaTTbar_ = discrTTbar_->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
-          }
+            
+	   if (nBJets_==2){
+	  
+               mvaQCD_ = discrQCD_CAT0_ ->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);  
+               mvaTTbar_ = discrTTbar_CAT0_->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
+          
+	    }
+	  
+	     if (nBJets_>2){
+	  
+	      mvaQCD_ = discrQCD_CAT1_    ->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
+              mvaTTbar_ = discrTTbar_CAT1_->eval(nJets_,ht_,(*pt_)[5],mbbMin_,dRbbMin_,qglMedian_,cosThetaStar1_,cosThetaStar2_,sphericity_,aplanarity_,centrality_,foxWolfram_[0],foxWolfram_[1],foxWolfram_[2],foxWolfram_[3],mTop_[0],ptTTbar_,mTTbar_,dRbbTop_,chi2_);
+	  
+	     } 
+            
+          
+	 
+	 
+	  }
           if (!antiBtagFlag) {
             cutFlowHisto_->Fill("antiBtag",1);
             outTree_->Fill();     

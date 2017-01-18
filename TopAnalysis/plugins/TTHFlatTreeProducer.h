@@ -85,7 +85,7 @@ class TTHFlatTreeProducer : public edm::EDAnalyzer
     edm::EDGetTokenT<edm::View<pat::Particle> > partonsPToken;
     edm::EDGetTokenT<edm::View<pat::Particle> > partonsPbarToken;
  
-    std::string srcBtag_,xmlFileQCD_,xmlFileTTbar_;
+    std::string srcBtag_,xmlFileQCD_CAT0_,xmlFileQCD_CAT1_,xmlFileTTbar_CAT0_,xmlFileTTbar_CAT1_;
     std::vector<std::string> triggerNames_;
     bool   isMC_,saveWeights_;
     int    nJetsMin_;
@@ -121,7 +121,7 @@ class TTHFlatTreeProducer : public edm::EDAnalyzer
     std::vector<int>   *lId_;
     std::vector<float> *lPt_,*lEta_,*lPhi_,*lE_,*lIso_;
     //---- MVA discriminators ----------
-    TTHDiscriminatorMVA  *discrQCD_,*discrTTbar_;
+    TTHDiscriminatorMVA  *discrQCD_CAT0_, *discrQCD_CAT1_,*discrTTbar_CAT0_, *discrTTbar_CAT1_ ;
     //---- MC variables ---------------
     bool HToBB_; 
     int npu_,decay_;
