@@ -939,6 +939,19 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
 	  GenSubJet1Mass_->push_back(jet_mass_1);
 	  GenSubJet2Mass_->push_back(jet_mass_2);
 	}
+	      
+	else {
+
+	  GenSubJet1Pt_->push_back(-10);
+	  GenSubJet2Pt_->push_back(-10);
+	  GenSubJet1Eta_->push_back(-10);
+	  GenSubJet2Eta_->push_back(-10);
+	  GenSubJet1Phi_->push_back(-10);
+	  GenSubJet2Phi_->push_back(-10);
+	  GenSubJet1Mass_->push_back(-10);
+	  GenSubJet2Mass_->push_back(-10);
+   
+	}
 
 	GenSubJetsDeltaR_->push_back(deltaRgensubjets);
 	GenSubJetsMu_->push_back(mugensubjets);
