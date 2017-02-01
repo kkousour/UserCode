@@ -7,12 +7,31 @@ process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2'
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
-    "/store/mc/RunIISpring16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0_ext3-v2/70000/001C3ACD-2C31-E611-A7EE-003048F5ADF6.root"
+    "/store/mc/RunIISpring16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14_ext3-v1/10000/02A92AB0-833B-E611-BE5B-0CC47A4D7640.root"
     )
 )
 #############   Format MessageLogger #################
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+
+#############   JEC #################
+from CondCore.DBCommon.CondDBSetup_cfi import CondDBSetup
+
+process.jec = cms.ESSource('PoolDBESSource',
+    CondDBSetup,
+    #connect = cms.string('sqlite_fip:KKousour/TopAnalysis/prod/ttH/Summer16_23Sep2016V3_MC.db'),
+    connect = cms.string('sqlite:Summer16_23Sep2016V3_MC.db'),
+    toGet = cms.VPSet(
+        cms.PSet(
+            record = cms.string('JetCorrectionsRecord'),
+            tag    = cms.string('JetCorrectorParametersCollection_Summer16_23Sep2016V3_MC_AK4PFchs'),
+            label  = cms.untracked.string('AK4PFchs')
+        )
+    )
+)
+
+## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
+process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
 
 #--- first re-apply JEC from the GT -------------------------
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
@@ -53,14 +72,14 @@ process.load('TopQuarkAnalysis.TopKinFitter.TtFullHadKinFitProducer_cfi')
 process.kinFitTtFullHadEvent.jets                = 'goodJets'
 process.kinFitTtFullHadEvent.jetCorrectionLevel  = 'L3Absolute'
 process.kinFitTtFullHadEvent.bTagAlgo            = 'pfCombinedInclusiveSecondaryVertexV2BJetTags'
-process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.8
-process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.8
+process.kinFitTtFullHadEvent.minBTagValueBJet    = 0.8484
+process.kinFitTtFullHadEvent.maxBTagValueNonBJet = 0.8484
 process.kinFitTtFullHadEvent.bTags               = 2
 process.kinFitTtFullHadEvent.maxNJets            = 8
 process.kinFitTtFullHadEvent.jetEnergyResolutionScaleFactors = cms.vdouble(1.061,1.088,1.106,1.126,1.343)
 process.kinFitTtFullHadEvent.jetEnergyResolutionEtaBinning = cms.vdouble(0.0,0.8,1.3,1.9,2.5,-1)
 
-process.kinFitTtFullHadEventLoose = process.kinFitTtFullHadEvent.clone(minBTagValueBJet = 0.460, maxBTagValueNonBJet = 0.460)
+process.kinFitTtFullHadEventLoose = process.kinFitTtFullHadEvent.clone(minBTagValueBJet = 0.5426, maxBTagValueNonBJet = 0.5426)
 
 process.ttH = cms.EDAnalyzer('TTHFlatTreeProducer',
   jets              = cms.InputTag('goodJets'),
@@ -81,19 +100,23 @@ process.ttH = cms.EDAnalyzer('TTHFlatTreeProducer',
   xmlFileQCD_CAT1   = cms.string('TTH_mva_CAT1_QCD_BDT.weights.xml'),
   xmlFileTTbar_CAT0 = cms.string('TTH_mva_CAT0_TTbar_BDT.weights.xml'), 
   xmlFileTTbar_CAT1 = cms.string('TTH_mva_CAT1_TTbar_BDT.weights.xml'),
-  btagMinThreshold  = cms.double(0.8),
+  btagMinThreshold  = cms.double(0.8484),
   btagMaxThreshold  = cms.double(1.1),
   btagger           = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
   qgtagger          = cms.InputTag('QGTagger','qgLikelihood'),
   isMC              = cms.untracked.bool(True),
   triggerNames      = cms.vstring(
-     'HLT_PFHT450_SixJet40_v'
+     'HLT_PFHT450_SixJet40_BTagCSV_p056_v',
+     'HLT_PFHT450_SixJet40_v',
+     'HLT_PFHT400_SixJet30_DoubleBTagCSV_p056_v',
+     'HLT_PFHT400_SixJet30_v',
+     'HLT_PFHT350_v'
   ),
-  triggerResults   = cms.InputTag('TriggerResults','','HLT'),
+  triggerResults   = cms.InputTag('TriggerResults','','HLT2'),
   triggerPrescales = cms.InputTag('patTrigger')
 )
 
-process.ttHLoose   = process.ttH.clone(btagMinThreshold = 0.460, btagMaxThreshold = 0.8, kinfit = 'kinFitTtFullHadEventLoose')
+process.ttHLoose   = process.ttH.clone(btagMinThreshold = 0.5426, btagMaxThreshold = 0.8484, kinfit = 'kinFitTtFullHadEventLoose')
 
 process.reapplyjec = cms.Sequence(
    process.patJetCorrFactorsReapplyJEC +
