@@ -47,13 +47,17 @@ for ss in SAMPLES:
   tag1 = (ss.split("/")[1]).replace("/","")
   tag2 = (ss.split("/")[2]).replace("/","")
   tag = tag1
+  pset = ""
   if (tag2.find("ext1") > -1):
     tag += "_ext1"
   if (tag2.find("ext2") > -1):
     tag += "_ext2"
   if (tag2.find("ext3") > -1):
     tag += "_ext3" 
-  pset = "flat-TTH-cfg.py"
+  if (tag2.find("reHLT") > -1):
+    pset = "flat-MC_reHLT-cfg.py"
+  if (tag2.find("TrancheIV") > -1):
+    pset = "flat-MC_TrancheIV-cfg.py"
   name = "crab_"+tag+".py"
   print "Creating file: "+name+", cfg file: "+pset
 

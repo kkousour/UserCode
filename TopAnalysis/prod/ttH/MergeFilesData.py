@@ -4,8 +4,17 @@ from KKousour.TopAnalysis.eostools import *
 
 path = '/store/cmst3/user/kkousour/ttH/'
  
-era_list = ['Run2016C-PromptReco-v2','Run2016B-PromptReco-v2']
-
+era_list = [
+  "Run2016B-23Sep2016-v3",
+  "Run2016C-23Sep2016-v1",
+  "Run2016D-23Sep2016-v1",
+  "Run2016E-23Sep2016-v1",
+  "Run2016F-23Sep2016-v1",
+  "Run2016G-23Sep2016-v1",
+  "Run2016H-PromptReco-v1",
+  "Run2016H-PromptReco-v2",
+  "Run2016H-PromptReco-v3"
+]
 
 for era in era_list:
   dirs = ls_EOS(path+"/JetHT/crab_JetHT_"+era+"/")
