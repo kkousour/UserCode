@@ -4,11 +4,24 @@ crabSubmitFile = open("SubmitCrabJobsData.csh","w")
 crabSubmitFile.write("#!/bin/tcsh\n")
 
 SAMPLES = [
-  "/JetHT/Run2016B-PromptReco-v2/MINIAOD",
-  "/JetHT/Run2016C-PromptReco-v2/MINIAOD",
-  "/JetHT/Run2016D-PromptReco-v2/MINIAOD",
-  "/JetHT/Run2016E-PromptReco-v2/MINIAOD",
-  "/JetHT/Run2016F-PromptReco-v2/MINIAOD"
+  "/JetHT/Run2016B-23Sep2016-v3/MINIAOD",
+  "/JetHT/Run2016C-23Sep2016-v1/MINIAOD",
+  "/JetHT/Run2016D-23Sep2016-v1/MINIAOD",
+  "/JetHT/Run2016E-23Sep2016-v1/MINIAOD",
+  "/JetHT/Run2016F-23Sep2016-v1/MINIAOD",
+  "/JetHT/Run2016G-23Sep2016-v1/MINIAOD",
+  "/JetHT/Run2016H-PromptReco-v1/MINIAOD",
+  "/JetHT/Run2016H-PromptReco-v2/MINIAOD",
+  "/JetHT/Run2016H-PromptReco-v3/MINIAOD",
+  "/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD",
+  "/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD",
+  "/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD",
+  "/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD",
+  "/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD",
+  "/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD",
+  "/SingleMuon/Run2016H-PromptReco-v1/MINIAOD",
+  "/SingleMuon/Run2016H-PromptReco-v2/MINIAOD",
+  "/SingleMuon/Run2016H-PromptReco-v3/MINIAOD"
 ]
 
 for ss in SAMPLES:
@@ -33,11 +46,12 @@ for ss in SAMPLES:
   file.write("config.JobType.psetName = \'"+pset+"\'\n")
   file.write("config.JobType.maxJobRuntimeMin = 2750\n")
   file.write("config.JobType.allowUndistributedCMSSW = True\n")
+  file.write("config.JobType.inputFiles = ['Summer16_23Sep2016AllV3_DATA.db']\n")
   file.write("config.Data.inputDataset = \'"+ss+"\'\n")
   file.write("config.Data.inputDBS = \'global\'\n")
   file.write("config.Data.splitting = \'LumiBased\'\n")
   file.write("config.Data.unitsPerJob = 50\n")
-  file.write("config.Data.lumiMask = \'Cert_271036-277148_13TeV_PromptReco_Collisions16_JSON.txt\'\n")
+  file.write("config.Data.lumiMask = \'Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt\'\n")
   file.write("config.Data.outLFNDirBase = \'/store/group/cmst3/user/kkousour/ttbar/\'\n")
   file.write("config.Data.publication = False\n")
   file.write("config.Site.storageSite = \'T2_CH_CERN\'\n")
