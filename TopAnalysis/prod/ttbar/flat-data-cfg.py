@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('myprocess')
 process.TFileService=cms.Service("TFileService",fileName=cms.string('flatTree.root'))
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.GlobalTag.globaltag = '80X_dataRun2_Prompt_ICHEP16JEC_v0'
+process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v7'
 ##-------------------- Define the source  ----------------------------
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source = cms.Source("PoolSource",
@@ -16,19 +16,19 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 #############   JEC #################
-from CondCore.DBCommon.CondDBSetup_cfi import *
-process.jec = cms.ESSource("PoolDBESSource",
-      toGet = cms.VPSet(
-        cms.PSet(
-            record = cms.string('JetCorrectionsRecord'),
-            tag    = cms.string('JetCorrectorParametersCollection_Summer16_23Sep2016AllV3_DATA_AK8PFchs'),
-            label  = cms.untracked.string('AK8PFchs')
-        )  
-      ),
-      connect = cms.string('sqlite:Summer16_23Sep2016AllV3_DATA.db')
-)
+#from CondCore.DBCommon.CondDBSetup_cfi import *
+#process.jec = cms.ESSource("PoolDBESSource",
+#      toGet = cms.VPSet(
+#        cms.PSet(
+#            record = cms.string('JetCorrectionsRecord'),
+#            tag    = cms.string('JetCorrectorParametersCollection_Summer16_23Sep2016AllV3_DATA_AK8PFchs'),
+#            label  = cms.untracked.string('AK8PFchs')
+#        )  
+#      ),
+#      connect = cms.string('sqlite:Summer16_23Sep2016AllV3_DATA.db')
+#)
 ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
-process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
+#process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
 
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 
@@ -59,7 +59,7 @@ process.boosted = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
   minElPt          = cms.double(20),
   btagMin          = cms.double(0.8484),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
-  xmlFile          = cms.string('boosted_mva_Fisher_new.weights.xml'),
+  xmlFile          = cms.string('boosted_mva_MLP.weights.xml'),
   triggerNames     = cms.vstring(
     'HLT_AK8PFJet360_TrimMass30_v',
     'HLT_AK8DiPFJet250_200_TrimMass30_BTagCSV_p20_v',

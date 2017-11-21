@@ -30,6 +30,9 @@ class EventCounter : public edm::EDAnalyzer
     edm::Service<TFileService> fs_;
     TH1F *puHisto_,*evtWtHisto_,*decayHisto_;
     TH1F *h_ptTopParton_[2],*h_yTopParton_[2],*h_mTTbarParton_,*h_yTTbarParton_,*h_ptTTbarParton_;
+    TH1F *h_ptTopPartonFiducial_[2],*h_yTopPartonFiducial_[2],*h_mTTbarPartonFiducial_,*h_yTTbarPartonFiducial_,*h_ptTTbarPartonFiducial_;
+ 
+    double etaTopMax_,ptTopMin_;
 
     edm::Handle<edm::View<PileupSummaryInfo> > pupInfo;
     edm::Handle<GenEventInfoProduct> genEvtInfo;
