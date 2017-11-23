@@ -4,24 +4,24 @@ crabSubmitFile = open("SubmitCrabJobsData.csh","w")
 crabSubmitFile.write("#!/bin/tcsh\n")
 
 SAMPLES = [
-  "/JetHT/Run2016B-23Sep2016-v3/MINIAOD",
-  "/JetHT/Run2016C-23Sep2016-v1/MINIAOD",
-  "/JetHT/Run2016D-23Sep2016-v1/MINIAOD",
-  "/JetHT/Run2016E-23Sep2016-v1/MINIAOD",
-  "/JetHT/Run2016F-23Sep2016-v1/MINIAOD",
-  "/JetHT/Run2016G-23Sep2016-v1/MINIAOD",
-  "/JetHT/Run2016H-PromptReco-v1/MINIAOD",
-  "/JetHT/Run2016H-PromptReco-v2/MINIAOD",
-  "/JetHT/Run2016H-PromptReco-v3/MINIAOD",
-  "/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD",
-  "/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD",
-  "/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD",
-  "/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD",
-  "/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD",
-  "/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD",
-  "/SingleMuon/Run2016H-PromptReco-v1/MINIAOD",
-  "/SingleMuon/Run2016H-PromptReco-v2/MINIAOD",
-  "/SingleMuon/Run2016H-PromptReco-v3/MINIAOD"
+  "/JetHT/Run2016B-03Feb2017_ver1-v1/MINIAOD",
+  "/JetHT/Run2016B-03Feb2017_ver2-v2/MINIAOD",
+  "/JetHT/Run2016C-03Feb2017-v1/MINIAOD",
+  "/JetHT/Run2016D-03Feb2017-v1/MINIAOD",
+  "/JetHT/Run2016E-03Feb2017-v1/MINIAOD",
+  "/JetHT/Run2016F-03Feb2017-v1/MINIAOD",
+  "/JetHT/Run2016G-03Feb2017-v1/MINIAOD",
+  "/JetHT/Run2016H-03Feb2017_ver2-v1/MINIAOD",
+  "/JetHT/Run2016H-03Feb2017_ver3-v1/MINIAOD",
+  "/SingleMuon/Run2016B-03Feb2017_ver1-v1/MINIAOD",
+  "/SingleMuon/Run2016B-03Feb2017_ver2-v2/MINIAOD",
+  "/SingleMuon/Run2016C-03Feb2017-v1/MINIAOD",
+  "/SingleMuon/Run2016D-03Feb2017-v1/MINIAOD",
+  "/SingleMuon/Run2016E-03Feb2017-v1/MINIAOD",
+  "/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD",
+  "/SingleMuon/Run2016G-03Feb2017-v1/MINIAOD",                                                                                               
+  "/SingleMuon/Run2016H-03Feb2017_ver2-v1/MINIAOD",                                                                                          
+  "/SingleMuon/Run2016H-03Feb2017_ver3-v1/MINIAOD"
 ]
 
 for ss in SAMPLES:
@@ -46,7 +46,7 @@ for ss in SAMPLES:
   file.write("config.JobType.psetName = \'"+pset+"\'\n")
   file.write("config.JobType.maxJobRuntimeMin = 2750\n")
   file.write("config.JobType.allowUndistributedCMSSW = True\n")
-  file.write("config.JobType.inputFiles = ['Summer16_23Sep2016AllV3_DATA.db']\n")
+  #file.write("config.JobType.inputFiles = ['Summer16_23Sep2016AllV3_DATA.db']\n")
   file.write("config.Data.inputDataset = \'"+ss+"\'\n")
   file.write("config.Data.inputDBS = \'global\'\n")
   file.write("config.Data.splitting = \'LumiBased\'\n")

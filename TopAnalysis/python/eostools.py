@@ -7,8 +7,11 @@ import os
 import re
 import pprint
 import shutil
-import io
-import zlib
+#import io
+#import zlib
+
+#eos_select = '/afs/cern.ch/project/eos/installation/cms/bin/eos.select'
+eos_select = '/afs/cern.ch/project/eos/installation/obsolete/cms.old/bin/eos.select'
 
 def setCAFPath():
     """Hack to get the CAF scripts on the PYTHONPATH"""
@@ -17,7 +20,14 @@ def setCAFPath():
     if caf not in sys.path:
         sys.path.append(caf)
 setCAFPath()
+#try:
 import cmsIO
+
+#except ImportError as e:
+#  import logging
+#  logger = logging.getLogger(__name__)
+#  logger.warning(str(e))
+#  logger.warning("wasn't able to import cmsIO, which this job might not need, unless it uses EOS.")
 
 def runXRDCommand(path, cmd, *args):
     """Run an xrd command.
@@ -45,7 +55,7 @@ def runEOSCommand(path, cmd, *args):
     tokens = cmsIO.splitPFN(pfn)
     
     #obviously, this is not nice
-    command = ['/afs/cern.ch/project/eos/installation/pro/bin/eos.select', cmd]
+    command = [eos_select, cmd]
     command.extend(args)
     command.append(tokens[2])
     runner = cmsIO.cmsFileManip()

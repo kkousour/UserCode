@@ -7,6 +7,8 @@ EventCounter::EventCounter(edm::ParameterSet const& cfg):
   genEvtInfoToken(consumes<GenEventInfoProduct>(edm::InputTag("generator"))),
   genParticlesToken(consumes<edm::View<reco::GenParticle> >(edm::InputTag("prunedGenParticles")))
 {
+  etaTopMax_ = cfg.getParameter<double>("etaTopMax");
+  ptTopMin_  = cfg.getParameter<double>("ptTopMin");
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EventCounter::beginJob() 
@@ -21,6 +23,13 @@ void EventCounter::beginJob()
   h_mTTbarParton_   = fs_->make<TH1F>("h_mTTbarParton" ,"h_mTTbarParton" ,3000,0,3000);
   h_yTTbarParton_   = fs_->make<TH1F>("h_yTTbarParton" ,"h_yTTbarParton" ,600,-3,3); 
   h_ptTTbarParton_  = fs_->make<TH1F>("h_ptTTbarParton","h_ptTTbarParton",1000,0,1000);
+  h_ptTopPartonFiducial_[0] = fs_->make<TH1F>("h_ptTopPartonFiducial_0","h_ptTopPartonFiducial_0",1500,0,1500);
+  h_ptTopPartonFiducial_[1] = fs_->make<TH1F>("h_ptTopPartonFiducial_1","h_ptTopPartonFiducial_1",1500,0,1500);
+  h_yTopPartonFiducial_[0]  = fs_->make<TH1F>("h_yTopPartonFiducial_0" ,"h_yTopPartonFiducial_0" ,600,-3,3);
+  h_yTopPartonFiducial_[1]  = fs_->make<TH1F>("h_yTopPartonFiducial_1" ,"h_yTopPartonFiducial_1" ,600,-3,3);
+  h_mTTbarPartonFiducial_   = fs_->make<TH1F>("h_mTTbarPartonFiducial" ,"h_mTTbarPartonFiducial" ,3000,0,3000);
+  h_yTTbarPartonFiducial_   = fs_->make<TH1F>("h_yTTbarPartonFiducial" ,"h_yTTbarPartonFiducial" ,600,-3,3); 
+  h_ptTTbarPartonFiducial_  = fs_->make<TH1F>("h_ptTTbarPartonFiducial","h_ptTTbarPartonFiducial",1000,0,1000);
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EventCounter::endJob() 
@@ -68,7 +77,6 @@ void EventCounter::analyze(edm::Event const& iEvent, edm::EventSetup const& iSet
         }
       } 
     }// end of particle loop
-
     h_ptTopParton_[0]->Fill(TMath::Max(p4T.pt(),p4Tbar.pt()),genEvtInfo->weight());
     h_ptTopParton_[1]->Fill(TMath::Min(p4T.pt(),p4Tbar.pt()),genEvtInfo->weight());
     if (p4T.pt() > p4Tbar.pt()) {
@@ -77,12 +85,28 @@ void EventCounter::analyze(edm::Event const& iEvent, edm::EventSetup const& iSet
     }
     else {
       h_yTopParton_[1]->Fill(p4T.Rapidity(),genEvtInfo->weight());
-      h_yTopParton_[0]->Fill(p4Tbar.Rapidity(),genEvtInfo->weight()); 
+      h_yTopParton_[0]->Fill(p4Tbar.Rapidity(),genEvtInfo->weight());
     }
     h_mTTbarParton_->Fill((p4T+p4Tbar).mass(),genEvtInfo->weight());
     h_yTTbarParton_->Fill((p4T+p4Tbar).Rapidity(),genEvtInfo->weight());
     h_ptTTbarParton_->Fill((p4T+p4Tbar).pt(),genEvtInfo->weight());
-
+    if (TMath::Min(p4T.pt(),p4Tbar.pt()) > ptTopMin_) {
+      if (fabs(p4T.eta() < etaTopMax_) && fabs(p4Tbar.eta() < etaTopMax_)) {
+        h_ptTopPartonFiducial_[0]->Fill(TMath::Max(p4T.pt(),p4Tbar.pt()),genEvtInfo->weight());
+        h_ptTopPartonFiducial_[1]->Fill(TMath::Min(p4T.pt(),p4Tbar.pt()),genEvtInfo->weight());
+        if (p4T.pt() > p4Tbar.pt()) {
+          h_yTopPartonFiducial_[0]->Fill(p4T.Rapidity(),genEvtInfo->weight());
+          h_yTopPartonFiducial_[1]->Fill(p4Tbar.Rapidity(),genEvtInfo->weight());
+        }
+        else {
+          h_yTopPartonFiducial_[1]->Fill(p4T.Rapidity(),genEvtInfo->weight());
+          h_yTopPartonFiducial_[0]->Fill(p4Tbar.Rapidity(),genEvtInfo->weight()); 
+        }
+        h_mTTbarPartonFiducial_->Fill((p4T+p4Tbar).mass(),genEvtInfo->weight());
+        h_yTTbarPartonFiducial_->Fill((p4T+p4Tbar).Rapidity(),genEvtInfo->weight());
+        h_ptTTbarPartonFiducial_->Fill((p4T+p4Tbar).pt(),genEvtInfo->weight());
+      }
+    }
     int decay(-1);
 
     if (WPlusLep && WMinusLep)   decay = 2;

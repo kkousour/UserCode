@@ -103,8 +103,8 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     TH1F *triggerPassHisto_,*triggerNamesHisto_;
     //---- output TREE variables ------
     //---- global event variables -----
-    int   run_,evt_,nVtx_,lumi_,nJets_,nBJets_,nLeptons_;
-    float rho_,met_,metSig_,ht_,mva_,pvRho_,pvz_,pvndof_,pvchi2_;
+    int   run_,evt_,nVtx_,lumi_,nJets_,nBJets_,category_,nLeptons_;
+    float rho_,met_,metSig_,ht_,mva_;
     std::vector<bool> *triggerBit_;
     std::vector<int>  *triggerPre_;
     //---- top variables --------------
@@ -112,7 +112,7 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     //---- jet variables --------------
     std::vector<bool>  *isBtag_;
     std::vector<int>   *flavor_,*nSubJets_,*nBSubJets_,*flavorHadron_;
-    std::vector<float> *pt_,*eta_,*phi_,*mass_,*massSoftDrop_,*energy_,*chf_,*nhf_,*phf_,*elf_,*muf_,*btag_,*tau1_,*tau2_,*tau3_;
+    std::vector<float> *pt_,*eta_,*phi_,*mass_,*massSoftDrop_,*chf_,*nhf_,*phf_,*elf_,*muf_,*btag_,*tau1_,*tau2_,*tau3_;
     std::vector<float> *btagSub0_,*btagSub1_,*massSub0_,*massSub1_,*ptSub0_,*ptSub1_,*etaSub0_,*etaSub1_,*phiSub0_,*phiSub1_;
     std::vector<int>   *flavorSub0_,*flavorSub1_,*flavorHadronSub0_,*flavorHadronSub1_;
     //---- lepton variables -----------
@@ -130,7 +130,7 @@ class BoostedTTbarFlatTreeProducer : public edm::EDAnalyzer
     std::vector<float> *scaleWeights_,*pdfWeights_;
     std::vector<int> *nSubGenJets_;
     std::vector<float> *GenSubJet1Pt_,*GenSubJet2Pt_,*GenSubJet1Eta_,*GenSubJet2Eta_,*GenSubJet1Phi_,*GenSubJet2Phi_,*GenSubJet1Mass_,*GenSubJet2Mass_,*GenSubJetsDeltaR_;
-    std::vector<float> *GenSoftDropMass_,*GenJetpt_,*GenJetphi_,*GenJeteta_,*GenJetenergy_,*GenJetmass_,*GenJettau1_,*GenJettau2_,*GenJettau3_;
+    std::vector<float> *GenSoftDropMass_,*GenJetpt_,*GenJetphi_,*GenJeteta_,*GenJety_,*GenJetenergy_,*GenJetmass_,*GenJettau1_,*GenJettau2_,*GenJettau3_;
     std::vector<bool>  *isBJetGen_;
 
     edm::Handle<pat::JetCollection> jets;

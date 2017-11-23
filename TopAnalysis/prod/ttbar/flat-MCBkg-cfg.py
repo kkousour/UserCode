@@ -2,12 +2,19 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('myprocess')
 process.TFileService=cms.Service("TFileService",fileName=cms.string('flatTree.root'))
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v1'
+process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_TrancheIV_v8'
 ##-------------------- Define the source  ----------------------------
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
-    "/store/mc/RunIISpring16MiniAODv2/TT_TuneCUETP8M1_13TeV-powheg-pythia8/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14_ext3-v1/00000/0064B539-803A-E611-BDEA-002590D0B060.root"
+    #"/store/mc/RunIISummer16MiniAODv2/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0693E0E7-97BE-E611-B32F-0CC47A78A3D8.root"
+    #"/store/mc/RunIISummer16MiniAODv2/TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext2-v1/110000/1C215A5A-94AA-E611-BF2D-047D7B881D06.root"
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/1C998C87-A1E3-E611-8904-FA163E7D40E5.root",
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/2225F2B8-06E2-E611-A1B0-0CC47A4C8ECE.root",
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/2299238C-15E2-E611-9D02-001E67A40604.root",
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/24C5534D-D2E2-E611-9BAF-A0000420FE80.root",
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/32DFCF21-D2E2-E611-ACAB-FA163E9E6DB8.root",
+"/store/mc/RunIISummer16MiniAODv2/ttHJetTobb_M125_13TeV_amcatnloFXFX_madspin_pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext3-v1/110000/38345EDA-E5E1-E611-AC6B-24BE05C47B22.root"
     )
 )
 #############   Format MessageLogger #################
@@ -15,19 +22,19 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 #############   JEC #################
-from CondCore.DBCommon.CondDBSetup_cfi import *
-process.jec = cms.ESSource("PoolDBESSource",
-      toGet = cms.VPSet(
-        cms.PSet(
-            record = cms.string('JetCorrectionsRecord'),
-            tag    = cms.string('JetCorrectorParametersCollection_Summer16_23Sep2016V3_MC_AK8PFchs'),
-            label  = cms.untracked.string('AK8PFchs')
-        ) 
-      ),
-      connect = cms.string('sqlite:Summer16_23Sep2016V3_MC.db')
-)
+#from CondCore.DBCommon.CondDBSetup_cfi import *
+#process.jec = cms.ESSource("PoolDBESSource",
+#      toGet = cms.VPSet(
+#        cms.PSet(
+#            record = cms.string('JetCorrectionsRecord'),
+#            tag    = cms.string('JetCorrectorParametersCollection_Summer16_23Sep2016V3_MC_AK8PFchs'),
+#            label  = cms.untracked.string('AK8PFchs')
+#        ) 
+#      ),
+#      connect = cms.string('sqlite:Summer16_23Sep2016V3_MC.db')
+#)
 ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
-process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
+#process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
 
 #--- first re-apply JEC from the GT -------------------------
 process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
@@ -48,7 +55,7 @@ process.smearedJetsAK8 = cms.EDProducer('JetShiftProducer',
   jets        = cms.InputTag('patJetsReapplyJECAK8'),
   rho         = cms.InputTag('fixedGridRhoFastjetAll'),
   payload     = cms.untracked.string('AK8PFchs'),
-  resSFFile   = cms.untracked.string('Summer15_25nsV6_MC_SF_AK4PFchs.txt'),
+  resSFFile   = cms.untracked.string('Spring16_25nsV10_MC_SF_AK8PFchs.txt'),
   shiftJES    = cms.untracked.double(0.0),
   shiftJER    = cms.untracked.double(0.0),
   doSmear     = cms.untracked.bool(True),
@@ -108,7 +115,7 @@ process.boosted = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
   minElPt          = cms.double(20),
   btagMin          = cms.double(0.8484),
   btagger          = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
-  xmlFile          = cms.string('boosted_mva_Fisher_new.weights.xml'),
+  xmlFile          = cms.string('boosted_mva_MLP.weights.xml'),
   isMC             = cms.untracked.bool(True),
   genjets          = cms.untracked.InputTag('slimmedGenJetsAK8'),
   jetFlavourInfos  = cms.untracked.InputTag("ak8genJetFlavourInfos"),                 
@@ -126,17 +133,20 @@ process.boosted = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
     'HLT_IsoMu27_v',
     'HLT_Mu50_v'
   ),
-  triggerResults   = cms.InputTag('TriggerResults','','HLT2'),
+  triggerResults   = cms.InputTag('TriggerResults','','HLT'),
   triggerPrescales = cms.InputTag('patTrigger')
 )
 
-process.boostedSmeared     = process.boosted.clone(jets = 'smearedJetsAK8', saveWeights = False)
-process.boostedSmearedUp   = process.boosted.clone(jets = 'smearedJetsAK8Up', saveWeights = False)
-process.boostedSmearedDown = process.boosted.clone(jets = 'smearedJetsAK8Down', saveWeights = False)
-process.boostedShiftedUp   = process.boosted.clone(jets = 'shiftedJetsAK8Up', saveWeights = False)
-process.boostedShiftedDown = process.boosted.clone(jets = 'shiftedJetsAK8Down', saveWeights = False)
+process.boostedSmeared     = process.boosted.clone(jets = 'smearedJetsAK8',    saveWeights = False)
+process.boostedSmearedUp   = process.boosted.clone(jets = 'smearedJetsAK8Up',  saveWeights = False)
+process.boostedSmearedDown = process.boosted.clone(jets = 'smearedJetsAK8Down',saveWeights = False)
+process.boostedShiftedUp   = process.boosted.clone(jets = 'shiftedJetsAK8Up',  saveWeights = False)
+process.boostedShiftedDown = process.boosted.clone(jets = 'shiftedJetsAK8Down',saveWeights = False)
 
-process.eventCounter = cms.EDAnalyzer("EventCounter")
+process.eventCounter = cms.EDAnalyzer("EventCounter",
+   ptTopMin  = cms.double(400),
+   etaTopMax = cms.double(5.0)
+)
 
 process.reapplyjec = cms.Sequence(
    process.patJetCorrFactorsReapplyJECAK8 + 
