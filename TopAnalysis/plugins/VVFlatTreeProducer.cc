@@ -5,7 +5,7 @@
 #include <cassert>
 #include "Math/SpecFuncMathMore.h"
 #include "TMath.h"
-#include "KKousour/TopAnalysis/plugins/VVFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/VVFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -262,7 +262,7 @@ bool VVFlatTreeProducer::isGoodElectron(const pat::Electron &el,const reco::Vert
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// tight working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;

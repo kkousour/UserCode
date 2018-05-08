@@ -14,7 +14,7 @@
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 
-#include "KKousour/TopAnalysis/plugins/BoostedTTbarFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/BoostedTTbarFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -185,7 +185,7 @@ void BoostedTTbarFlatTreeProducer::beginJob()
   outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
   outTree_->Branch("triggerPre"           ,"vector<int>"       ,&triggerPre_);
   //------------------------------------------------------------------
-  discr_ = new BoostedDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFile_);
+  discr_ = new BoostedDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFile_);
   //------------------- MC ---------------------------------
   if (isMC_) {
     outTree_->Branch("decay"                ,&decay_             ,"decay_/I");
@@ -369,8 +369,8 @@ bool BoostedTTbarFlatTreeProducer::isGoodJet(const pat::Jet &jet)
   if (!idT) res = false;
   if (pt < ptMin_) res = false;
   if (eta > etaMax_) res = false;
-  if (jet.userFloat("ak8PFJetsCHSSoftDropMass") < massMin_) res = false;
-  if ((jet.subjets("SoftDrop")).size() < 2) res = false;
+  if (jet.userFloat("ak8PFJetsPuppiSoftDropMass") < massMin_) res = false;
+  if ((jet.subjets("SoftDropPuppi")).size() < 2) res = false;
   return res;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +473,7 @@ bool BoostedTTbarFlatTreeProducer::isGoodElectron(const pat::Electron &el,const 
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// tight working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;
@@ -592,12 +592,12 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
         phi_           ->push_back(ijet->phi());
         eta_           ->push_back(ijet->eta());
         mass_          ->push_back(ijet->mass());
-        massSoftDrop_  ->push_back(ijet->userFloat("ak8PFJetsCHSSoftDropMass"));
+        massSoftDrop_  ->push_back(ijet->userFloat("ak8PFJetsPuppiSoftDropMass"));
         btag_          ->push_back(btag);
         isBtag_        ->push_back(isBtag);
-        tau1_          ->push_back(ijet->userFloat("NjettinessAK8:tau1"));
-        tau2_          ->push_back(ijet->userFloat("NjettinessAK8:tau2"));
-        tau3_          ->push_back(ijet->userFloat("NjettinessAK8:tau3"));
+        tau1_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau1"));
+        tau2_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau2"));
+        tau3_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau3"));
         vP4.push_back(ijet->p4());
         ht_ += ijet->pt();
         nJets_++;
@@ -605,28 +605,28 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
           nBJets_++;
         } 
         //---- subjets --------------------
-        int nSub((ijet->subjets("SoftDrop")).size());
+        int nSub((ijet->subjets("SoftDropPuppi")).size());
         int nBSub(0);
         if (nSub > 0) {
-          btagSub0_->push_back((ijet->subjets("SoftDrop"))[0]->bDiscriminator(srcBtag_.c_str()));
-          massSub0_->push_back((ijet->subjets("SoftDrop"))[0]->mass());
-          ptSub0_->push_back((ijet->subjets("SoftDrop"))[0]->pt());
-          etaSub0_->push_back((ijet->subjets("SoftDrop"))[0]->eta());
-	  phiSub0_->push_back((ijet->subjets("SoftDrop"))[0]->phi());
-          flavorSub0_->push_back((ijet->subjets("SoftDrop"))[0]->partonFlavour());
-	  flavorHadronSub0_->push_back((ijet->subjets("SoftDrop"))[0]->hadronFlavour());
-          if ((ijet->subjets("SoftDrop"))[0]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
+          btagSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->bDiscriminator(srcBtag_.c_str()));
+          massSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->mass());
+          ptSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->pt());
+          etaSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->eta());
+	  phiSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->phi());
+          flavorSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->partonFlavour());
+	  flavorHadronSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->hadronFlavour());
+          if ((ijet->subjets("SoftDropPuppi"))[0]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
             nBSub++;
           }
           if (nSub > 1) {
-            btagSub1_->push_back((ijet->subjets("SoftDrop"))[1]->bDiscriminator(srcBtag_.c_str()));
-            massSub1_->push_back((ijet->subjets("SoftDrop"))[1]->mass());
-            ptSub1_->push_back((ijet->subjets("SoftDrop"))[1]->pt());
-            etaSub1_->push_back((ijet->subjets("SoftDrop"))[1]->eta());
-	    phiSub1_->push_back((ijet->subjets("SoftDrop"))[1]->phi());
-            flavorSub1_->push_back((ijet->subjets("SoftDrop"))[1]->partonFlavour());
-	    flavorHadronSub1_->push_back((ijet->subjets("SoftDrop"))[1]->hadronFlavour());
-            if ((ijet->subjets("SoftDrop"))[1]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
+            btagSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->bDiscriminator(srcBtag_.c_str()));
+            massSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->mass());
+            ptSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->pt());
+            etaSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->eta());
+	    phiSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->phi());
+            flavorSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->partonFlavour());
+	    flavorHadronSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->hadronFlavour());
+            if ((ijet->subjets("SoftDropPuppi"))[1]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
               nBSub++;
             }
           } 
