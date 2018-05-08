@@ -548,7 +548,12 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
-      trigger_name.pop_back();
+      
+      std::size_t last_index = trigger_name.find_last_not_of("0123456789");
+      //increment by +1 since the index we have is for the non-numeric character
+      //and erase everything starting starting from that index
+      trigger_name.erase(last_index+1, trigger_name.length()-1);
+      
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig);
         pre = triggerPrescales->getPrescaleForIndex(itrig);
