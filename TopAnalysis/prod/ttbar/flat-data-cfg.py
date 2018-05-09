@@ -2,13 +2,15 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('myprocess')
 process.TFileService=cms.Service("TFileService",fileName=cms.string('flatTree.root'))
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v7'
+process.GlobalTag.globaltag = '92X_dataRun2_Prompt_v8'
 ##-------------------- Define the source  ----------------------------
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
     #"/store/data/Run2016E/JetHT/MINIAOD/23Sep2016-v1/100000/0248DC22-B889-E611-B75F-0025905A60AA.root"
-    '/store/data/Run2016G/SingleMuon/MINIAOD/23Sep2016-v1/1110000/A2C0F697-B19C-E611-A4D8-F04DA275BFF2.root'
+    #'root://cms-xrd-global.cern.ch///store/data/Run2017E/JetHT/MINIAOD/PromptReco-v1/000/303/569/00000/26CB3404-74A0-E711-A8FF-02163E0143D8.root'
+    #'root://cms-xrd-global.cern.ch///store/data/Run2017D/JetHT/MINIAOD/PromptReco-v1/000/302/031/00000/90AD63BD-468F-E711-8E76-02163E019CD0.root'
+    #'/store/data/Run2016G/SingleMuon/MINIAOD/23Sep2016-v1/1110000/A2C0F697-B19C-E611-A4D8-F04DA275BFF2.root'
     )
 )
 #############   Format MessageLogger #################
@@ -35,7 +37,7 @@ process.load("PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cff")
 process.patJetCorrFactorsReapplyJECAK8 = process.updatedPatJetCorrFactors.clone(
   src = cms.InputTag("slimmedJetsAK8"),
   levels = ['L1FastJet','L2Relative','L3Absolute','L2L3Residual'],
-  payload = 'AK8PFchs' 
+  payload = 'AK8PFPuppi' 
 ) 
 
 process.patJetsReapplyJECAK8 = process.updatedPatJets.clone(
@@ -62,13 +64,13 @@ process.boosted = cms.EDAnalyzer('BoostedTTbarFlatTreeProducer',
   xmlFile          = cms.string('boosted_mva_MLP.weights.xml'),
   triggerNames     = cms.vstring(
     'HLT_AK8PFJet360_TrimMass30_v',
-    'HLT_AK8DiPFJet250_200_TrimMass30_BTagCSV_p20_v',
-    'HLT_AK8DiPFJet280_200_TrimMass30_BTagCSV_p20_v',
-    'HLT_AK8DiPFJet250_200_TrimMass30_v',
-    'HLT_AK8DiPFJet280_200_TrimMass30_v',
     'HLT_AK8PFJet140_v',
     'HLT_AK8PFJet200_v',
     'HLT_AK8PFJet260_v',
+    'HLT_AK8PFHT750_TrimMass50_v',
+    'HLT_AK8PFHT800_TrimMass50_v',
+    'HLT_AK8PFHT900_TrimMass50_v',
+    'HLT_AK8PFHT950_TrimMass50_v',
     'HLT_IsoMu27_v',
     'HLT_Mu50_v'
   ),
@@ -81,11 +83,3 @@ process.p = cms.Path(
    process.patJetsReapplyJECAK8 +
    process.boosted
 )
-
-
-
-
-
-
-
-
