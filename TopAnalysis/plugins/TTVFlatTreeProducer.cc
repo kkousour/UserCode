@@ -9,7 +9,7 @@
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
 
-#include "KKousour/TopAnalysis/plugins/TTVFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/TTVFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -163,8 +163,8 @@ void TTVFlatTreeProducer::beginJob()
       outTree_->Branch("pdfWeights"           ,"vector<float>"     ,&pdfWeights_);
     } 
   }
-  discrTTW_ = new TTVDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTW_,"selW");
-  discrTTZ_ = new TTVDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTZ_,"selZ");
+  discrTTW_ = new TTVDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileTTW_,"selW");
+  discrTTZ_  = new TTVDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileTTZ_,"selZ");
   cout<<"Begin job finished"<<endl;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +279,7 @@ bool TTVFlatTreeProducer::isGoodElectron(const pat::Electron &el,const reco::Ver
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// medium working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;
@@ -349,7 +349,12 @@ void TTVFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
-      trigger_name.pop_back();
+      
+      std::size_t last_index = trigger_name.find_last_not_of("0123456789");
+      //increment by +1 since the index we have is for the non-numeric character
+      //and erase everything starting starting from that index
+      trigger_name.erase(last_index+1, trigger_name.length()-1);
+      
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig); 
         pre = triggerPrescales->getPrescaleForIndex(itrig);

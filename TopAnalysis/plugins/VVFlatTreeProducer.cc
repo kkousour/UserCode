@@ -5,7 +5,7 @@
 #include <cassert>
 #include "Math/SpecFuncMathMore.h"
 #include "TMath.h"
-#include "KKousour/TopAnalysis/plugins/VVFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/VVFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -262,7 +262,7 @@ bool VVFlatTreeProducer::isGoodElectron(const pat::Electron &el,const reco::Vert
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// tight working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;
@@ -315,7 +315,12 @@ void VVFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup const
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
-      trigger_name.pop_back();
+      
+      std::size_t last_index = trigger_name.find_last_not_of("0123456789");
+      //increment by +1 since the index we have is for the non-numeric character
+      //and erase everything starting starting from that index
+      trigger_name.erase(last_index+1, trigger_name.length()-1);
+      
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig); 
         pre = triggerPrescales->getPrescaleForIndex(itrig);

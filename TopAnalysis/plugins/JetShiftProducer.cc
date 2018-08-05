@@ -74,7 +74,7 @@ void JetShiftProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
   iEvent.getByToken(jetsToken,jets);
   pat::JetCollection pat_jets = *jets;  
 
-  std::auto_ptr<pat::JetCollection> result(new pat::JetCollection); //Shifted jets
+  std::unique_ptr<pat::JetCollection> result(new pat::JetCollection); //Shifted jets
   const int size = pat_jets.size();
   result->reserve(size);
 
@@ -91,7 +91,7 @@ void JetShiftProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
   res_sf = JME::JetResolutionScaleFactor::get(iSetup,payload_+"_pt"); 
   */
   if (doSmear_) {
-    res_sf = JME::JetResolutionScaleFactor(edm::FileInPath("KKousour/TopAnalysis/data/"+resSFFile_).fullPath());
+    res_sf = JME::JetResolutionScaleFactor(edm::FileInPath("UserCode/TopAnalysis/data/"+resSFFile_).fullPath());
   }
   
   for(pat::JetCollection::const_iterator ijet = pat_jets.begin(); ijet != pat_jets.end(); ++ijet) {
@@ -144,7 +144,7 @@ void JetShiftProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
   }
   NumericSafeGreaterByPt<pat::Jet> compJets;
   std::sort(result->begin(),result->end(),compJets);
-  iEvent.put(result);
+  iEvent.put(std::move(result));
 
   return;
 }

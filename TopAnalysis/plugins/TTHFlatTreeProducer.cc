@@ -23,7 +23,7 @@
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
 
-#include "KKousour/TopAnalysis/plugins/TTHFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/TTHFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -188,10 +188,10 @@ void TTHFlatTreeProducer::beginJob()
   outTree_->Branch("lepIso"               ,"vector<float>"     ,&lIso_);
   //------------------------------------------------------------------
   
-  discrQCD_CAT0_   = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileQCD_CAT0_, "CAT0",  "QCD");
-  discrQCD_CAT1_   = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileQCD_CAT1_, "CAT1",  "QCD");
-  discrTTbar_CAT0_ = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTbar_CAT0_,"CAT0", "TTbar");
-  discrTTbar_CAT1_ = new TTHDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFileTTbar_CAT1_,"CAT1", "TTbar");
+  discrQCD_CAT0_   = new TTHDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileQCD_CAT0_, "CAT0",  "QCD");
+  discrQCD_CAT1_   = new TTHDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileQCD_CAT1_, "CAT1",  "QCD");
+  discrTTbar_CAT0_ = new TTHDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileTTbar_CAT0_,"CAT0", "TTbar");
+  discrTTbar_CAT1_ = new TTHDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFileTTbar_CAT1_,"CAT1", "TTbar");
   
   triggerBit_  = new std::vector<bool>;
   triggerPre_  = new std::vector<int>;
@@ -310,7 +310,7 @@ bool TTHFlatTreeProducer::isGoodElectron(const pat::Electron &el,const reco::Ver
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// medium working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;
@@ -548,7 +548,12 @@ void TTHFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup cons
     for(unsigned int itrig=0;itrig<triggerResults->size();itrig++) {
       string trigger_name = string(names.triggerName(itrig));
       //--- erase the last character, i.e. the version number----
-      trigger_name.pop_back();
+      
+      std::size_t last_index = trigger_name.find_last_not_of("0123456789");
+      //increment by +1 since the index we have is for the non-numeric character
+      //and erase everything starting starting from that index
+      trigger_name.erase(last_index+1, trigger_name.length()-1);
+      
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig);
         pre = triggerPrescales->getPrescaleForIndex(itrig);

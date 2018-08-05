@@ -14,7 +14,7 @@
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 
-#include "KKousour/TopAnalysis/plugins/BoostedTTbarFlatTreeProducer.h"
+#include "UserCode/TopAnalysis/plugins/BoostedTTbarFlatTreeProducer.h"
 
 using namespace std;
 using namespace reco;
@@ -185,7 +185,7 @@ void BoostedTTbarFlatTreeProducer::beginJob()
   outTree_->Branch("triggerBit"           ,"vector<bool>"      ,&triggerBit_);
   outTree_->Branch("triggerPre"           ,"vector<int>"       ,&triggerPre_);
   //------------------------------------------------------------------
-  discr_ = new BoostedDiscriminatorMVA("KKousour/TopAnalysis/data/"+xmlFile_);
+  discr_ = new BoostedDiscriminatorMVA("UserCode/TopAnalysis/data/"+xmlFile_);
   //------------------- MC ---------------------------------
   if (isMC_) {
     outTree_->Branch("decay"                ,&decay_             ,"decay_/I");
@@ -369,8 +369,8 @@ bool BoostedTTbarFlatTreeProducer::isGoodJet(const pat::Jet &jet)
   if (!idT) res = false;
   if (pt < ptMin_) res = false;
   if (eta > etaMax_) res = false;
-  if (jet.userFloat("ak8PFJetsCHSSoftDropMass") < massMin_) res = false;
-  if ((jet.subjets("SoftDrop")).size() < 2) res = false;
+  if (jet.userFloat("ak8PFJetsPuppiSoftDropMass") < massMin_) res = false;
+  if ((jet.subjets("SoftDropPuppi")).size() < 2) res = false;
   return res;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +473,7 @@ bool BoostedTTbarFlatTreeProducer::isGoodElectron(const pat::Electron &el,const 
     float ooEmooP = (float)fabs(1/ecalEnergy - 1/trackMomentumAtVtx);
     float d0 = (float)el.gsfTrack()->dxy(vtx.position());
     float dz = (float)el.gsfTrack()->dz(vtx.position());
-    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    int expectedMissingInnerHits = el.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     bool passConversionVeto = el.passConversionVeto();
     if(isEB) {// tight working point
       if(res && full5x5_sigmaIetaIeta > 0.0101) res = false;
@@ -530,7 +530,12 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
       string trigger_name = string(names.triggerName(itrig));
       if (printTriggerMenu_) cout<<trigger_name<<endl;
       //--- erase the last character, i.e. the version number----
-      trigger_name.pop_back();
+      
+      std::size_t last_index = trigger_name.find_last_not_of("0123456789");
+      //increment by +1 since the index we have is for the non-numeric character
+      //and erase everything starting starting from that index
+      trigger_name.erase(last_index+1, trigger_name.length()-1);
+      
       if (trigger_name == triggerNames_[k]) {
         bit = triggerResults->accept(itrig); 
         pre = triggerPrescales->getPrescaleForIndex(itrig);
@@ -572,69 +577,72 @@ void BoostedTTbarFlatTreeProducer::analyze(edm::Event const& iEvent, edm::EventS
   nBJets_   = 0;
   ht_       = 0.0;
   vector<LorentzVector> vP4; 
-  for(pat::JetCollection::const_iterator ijet =jets->begin();ijet != jets->end(); ++ijet) {  
-    if (isGoodJet(*ijet)) {
-      float btag= ijet->bDiscriminator(srcBtag_.c_str());
-      bool isBtag = (btag >= btagMin_);
-      bool isLeptonMatched = false;
-      float DRmax = 0.4;
-      if(isPrint_) {if (isBtag==true) cout<<"RECO "<<ijet->pt()<<" "<<ijet->eta()<<" "<<ijet->phi()<<endl;}
-      for(auto & lep: myLeptons) if( deltaR(lep->eta(),lep->phi(),ijet->eta(),ijet->phi()) < DRmax ) isLeptonMatched = true;
-      if (!isLeptonMatched) {
-        flavor_        ->push_back(ijet->partonFlavour());
-	flavorHadron_  ->push_back(ijet->hadronFlavour());
-        chf_           ->push_back(ijet->chargedHadronEnergyFraction());
-        nhf_           ->push_back(ijet->neutralHadronEnergyFraction());
-        phf_           ->push_back(ijet->photonEnergyFraction());
-        elf_           ->push_back(ijet->electronEnergyFraction());
-        muf_           ->push_back(ijet->muonEnergyFraction());
-        pt_            ->push_back(ijet->pt());
-        phi_           ->push_back(ijet->phi());
-        eta_           ->push_back(ijet->eta());
-        mass_          ->push_back(ijet->mass());
-        massSoftDrop_  ->push_back(ijet->userFloat("ak8PFJetsCHSSoftDropMass"));
-        btag_          ->push_back(btag);
-        isBtag_        ->push_back(isBtag);
-        tau1_          ->push_back(ijet->userFloat("NjettinessAK8:tau1"));
-        tau2_          ->push_back(ijet->userFloat("NjettinessAK8:tau2"));
-        tau3_          ->push_back(ijet->userFloat("NjettinessAK8:tau3"));
-        vP4.push_back(ijet->p4());
-        ht_ += ijet->pt();
-        nJets_++;
-        if (isBtag) {
-          nBJets_++;
-        } 
-        //---- subjets --------------------
-        int nSub((ijet->subjets("SoftDrop")).size());
-        int nBSub(0);
-        if (nSub > 0) {
-          btagSub0_->push_back((ijet->subjets("SoftDrop"))[0]->bDiscriminator(srcBtag_.c_str()));
-          massSub0_->push_back((ijet->subjets("SoftDrop"))[0]->mass());
-          ptSub0_->push_back((ijet->subjets("SoftDrop"))[0]->pt());
-          etaSub0_->push_back((ijet->subjets("SoftDrop"))[0]->eta());
-	  phiSub0_->push_back((ijet->subjets("SoftDrop"))[0]->phi());
-          flavorSub0_->push_back((ijet->subjets("SoftDrop"))[0]->partonFlavour());
-	  flavorHadronSub0_->push_back((ijet->subjets("SoftDrop"))[0]->hadronFlavour());
-          if ((ijet->subjets("SoftDrop"))[0]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
-            nBSub++;
-          }
-          if (nSub > 1) {
-            btagSub1_->push_back((ijet->subjets("SoftDrop"))[1]->bDiscriminator(srcBtag_.c_str()));
-            massSub1_->push_back((ijet->subjets("SoftDrop"))[1]->mass());
-            ptSub1_->push_back((ijet->subjets("SoftDrop"))[1]->pt());
-            etaSub1_->push_back((ijet->subjets("SoftDrop"))[1]->eta());
-	    phiSub1_->push_back((ijet->subjets("SoftDrop"))[1]->phi());
-            flavorSub1_->push_back((ijet->subjets("SoftDrop"))[1]->partonFlavour());
-	    flavorHadronSub1_->push_back((ijet->subjets("SoftDrop"))[1]->hadronFlavour());
-            if ((ijet->subjets("SoftDrop"))[1]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
+  for(pat::JetCollection::const_iterator ijet =jets->begin();ijet != jets->end(); ++ijet) {
+    if(ijet->pt() > 200)
+    {
+      if (isGoodJet(*ijet)) {
+        float btag= ijet->bDiscriminator(srcBtag_.c_str());
+        bool isBtag = (btag >= btagMin_);
+        bool isLeptonMatched = false;
+        float DRmax = 0.4;
+        if(isPrint_) {if (isBtag==true) cout<<"RECO "<<ijet->pt()<<" "<<ijet->eta()<<" "<<ijet->phi()<<endl;}
+        for(auto & lep: myLeptons) if( deltaR(lep->eta(),lep->phi(),ijet->eta(),ijet->phi()) < DRmax ) isLeptonMatched = true;
+        if (!isLeptonMatched) {
+          flavor_        ->push_back(ijet->partonFlavour());
+          flavorHadron_  ->push_back(ijet->hadronFlavour());
+          chf_           ->push_back(ijet->chargedHadronEnergyFraction());
+          nhf_           ->push_back(ijet->neutralHadronEnergyFraction());
+          phf_           ->push_back(ijet->photonEnergyFraction());
+          elf_           ->push_back(ijet->electronEnergyFraction());
+          muf_           ->push_back(ijet->muonEnergyFraction());
+          pt_            ->push_back(ijet->pt());
+          phi_           ->push_back(ijet->phi());
+          eta_           ->push_back(ijet->eta());
+          mass_          ->push_back(ijet->mass());
+          massSoftDrop_  ->push_back(ijet->userFloat("ak8PFJetsPuppiSoftDropMass"));
+          btag_          ->push_back(btag);
+          isBtag_        ->push_back(isBtag);
+          tau1_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau1"));
+          tau2_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau2"));
+          tau3_          ->push_back(ijet->userFloat("NjettinessAK8Puppi:tau3"));
+          vP4.push_back(ijet->p4());
+          ht_ += ijet->pt();
+          nJets_++;
+          if (isBtag) {
+            nBJets_++;
+          } 
+          //---- subjets --------------------
+          int nSub((ijet->subjets("SoftDropPuppi")).size());
+          int nBSub(0);
+          if (nSub > 0) {
+            btagSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->bDiscriminator(srcBtag_.c_str()));
+            massSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->mass());
+            ptSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->pt());
+            etaSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->eta());
+	        phiSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->phi());
+            flavorSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->partonFlavour());
+	        flavorHadronSub0_->push_back((ijet->subjets("SoftDropPuppi"))[0]->hadronFlavour());
+            if ((ijet->subjets("SoftDropPuppi"))[0]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
               nBSub++;
             }
-          } 
-        }
-        nSubJets_->push_back(nSub);
-        nBSubJets_->push_back(nBSub);  
-      }// if not matched with leptons
-    }// if good jet
+            if (nSub > 1) {
+              btagSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->bDiscriminator(srcBtag_.c_str()));
+              massSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->mass());
+              ptSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->pt());
+              etaSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->eta());
+	          phiSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->phi());
+              flavorSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->partonFlavour());
+	          flavorHadronSub1_->push_back((ijet->subjets("SoftDropPuppi"))[1]->hadronFlavour());
+              if ((ijet->subjets("SoftDropPuppi"))[1]->bDiscriminator(srcBtag_.c_str()) >= btagMin_) {
+                nBSub++;
+              }
+            }
+          }
+          nSubJets_->push_back(nSub);
+          nBSubJets_->push_back(nBSub);
+        }// if not matched with leptons
+      }// if good jet
+    }
   }// jet loop       
   rho_    = *rho;
   met_    = (*met)[0].et();
